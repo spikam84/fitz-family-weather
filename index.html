@@ -1,130 +1,122 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Fitz Family Dashboard</title>
-
-<link rel="stylesheet" href="css/style.css">
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fitz Family Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />
 </head>
-
 <body>
+  <div class="app-shell">
+    <header class="top-bar">
+      <div class="brand">
+        <span class="menu-icon">☰</span>
+        <span class="logo">🌤️</span>
+        <div>
+          <h1>Quad Cities Family Weather</h1>
+          <p>Bettendorf, IA · Updated 6:24 AM</p>
+        </div>
+      </div>
+      <button class="refresh-button">↻</button>
+    </header>
 
-<header class="hero">
+    <main>
+      <section class="hero-grid">
+        <article class="weather-card large-card">
+          <div class="weather-icon">☀️</div>
+          <div>
+            <div class="temperature">72°F</div>
+            <h2>Mostly Sunny</h2>
+            <p>Feels like 72°</p>
+          </div>
+          <div class="weather-details">
+            <div><span>💧</span><strong>48%</strong><small>Humidity</small></div>
+            <div><span>💨</span><strong>N 8 mph</strong><small>Wind</small></div>
+            <div><span>🌅</span><strong>5:32 AM</strong><small>Sunrise</small></div>
+            <div><span>🌇</span><strong>8:47 PM</strong><small>Sunset</small></div>
+          </div>
+        </article>
 
-<div class="title-area">
-<div class="eyebrow">QUAD CITIES FAMILY DASHBOARD</div>
+        <article class="score-card large-card">
+          <h2>Outdoor Score</h2>
+          <div class="big-stars">★★★★★</div>
+          <div class="score-number">92<span>/100</span></div>
+          <h3>Perfect</h3>
+          <p>Excellent outdoor day!</p>
+        </article>
+      </section>
 
-<h1>Good Morning, Fitz Family ☀️</h1>
+      <section class="highlights-card">
+        <h2>Today's Highlights</h2>
+        <div class="highlight-grid">
+          <div class="highlight-item"><span class="highlight-icon">🎆</span><div><strong>Fireworks Tonight</strong><p class="good">Perfect conditions</p></div></div>
+          <div class="highlight-item"><span class="highlight-icon">🏍️</span><div><strong>Great Evening Ride</strong><p class="good">Light winds & clear skies</p></div></div>
+          <div class="highlight-item"><span class="highlight-icon">☀️</span><div><strong>UV Index High</strong><p class="watch">Use sun protection after 11 AM</p></div></div>
+          <div class="highlight-item"><span class="highlight-icon">⛈️</span><div><strong>Storms Not Expected</strong><p class="good">Quiet through the evening</p></div></div>
+        </div>
+      </section>
 
-<p>Bettendorf • Quad Cities</p>
-</div>
+      <section class="person-list">
+        <article class="person-card dad">
+          <div class="person-summary"><div class="avatar">👨</div><div><h2>Dad's Day</h2><p>Overall Score</p><div class="stars">★★★★☆</div><strong>Great</strong></div></div>
+          <div class="activity-row">
+            <div><span>🐕</span><p>Dog Walking</p><div class="stars small">★★★★★</div><strong>Perfect</strong></div>
+            <div><span>🚤</span><p>Boating</p><div class="stars small">★★★★☆</div><strong>Great</strong></div>
+            <div><span>⛈️</span><p>Storm Watching</p><div class="stars small">★☆☆☆☆</div><strong class="poor">Poor</strong></div>
+          </div>
+          <button>›</button>
+        </article>
 
-<div class="weather-now">
+        <article class="person-card mom">
+          <div class="person-summary"><div class="avatar">👩</div><div><h2>Mom's Day</h2><p>Overall Score</p><div class="stars">★★★★☆</div><strong>Great</strong></div></div>
+          <div class="activity-row">
+            <div><span>🚤</span><p>Boating</p><div class="stars small">★★★★★</div><strong>Perfect</strong></div>
+            <div><span>🎯</span><p>Shooting</p><div class="stars small">★★★★☆</div><strong>Great</strong></div>
+            <div><span>🌲</span><p>General Outdoors</p><div class="stars small">★★★★☆</div><strong>Great</strong></div>
+          </div>
+          <button>›</button>
+        </article>
 
-<div class="temp">72°F</div>
+        <article class="person-card nathan">
+          <div class="person-summary"><div class="avatar">👨</div><div><h2>Nathan's Day</h2><p>Overall Score</p><div class="stars">★★★☆☆</div><strong>Good</strong></div></div>
+          <div class="activity-row">
+            <div><span>🌱</span><p>Gardening</p><div class="stars small">★★★★★</div><strong>Perfect</strong></div>
+            <div><span>🔥</span><p>Grilling</p><div class="stars small">★★★☆☆</div><strong>Good</strong></div>
+            <div><span>🌲</span><p>General Outdoors</p><div class="stars small">★★★☆☆</div><strong>Good</strong></div>
+          </div>
+          <button>›</button>
+        </article>
 
-<div class="conditions">
-Sunny<br>
-Feels Like 72°
-</div>
+        <article class="person-card kelsey">
+          <div class="person-summary"><div class="avatar">👩</div><div><h2>Kelsey's Day</h2><p>Overall Score</p><div class="stars">★★☆☆☆</div><strong>Fair</strong></div></div>
+          <div class="activity-row">
+            <div><span>☀️</span><p>UV Index</p><div class="stars small">★★☆☆☆</div><strong>Fair</strong></div>
+            <div><span>🌡️</span><p>Heat Comfort</p><div class="stars small">★★☆☆☆</div><strong>Fair</strong></div>
+            <div><span>🌅</span><p>Morning Outside</p><div class="stars small">★★★★★</div><strong>Perfect</strong></div>
+          </div>
+          <button>›</button>
+        </article>
 
-</div>
+        <article class="person-card micah">
+          <div class="person-summary"><div class="avatar">👨</div><div><h2>Micah's Day</h2><p>Overall Score</p><div class="stars">★★★★☆</div><strong>Great</strong></div></div>
+          <div class="activity-row">
+            <div><span>🏍️</span><p>Motorcycle</p><div class="stars small">★★★★★</div><strong>Perfect</strong></div>
+            <div><span>🌲</span><p>General Outdoors</p><div class="stars small">★★★★☆</div><strong>Great</strong></div>
+            <div><span>⛈️</span><p>Storm Watching</p><div class="stars small">★★★☆☆</div><strong>Good</strong></div>
+          </div>
+          <button>›</button>
+        </article>
+      </section>
+    </main>
 
-</header>
-
-<main class="container">
-
-<section class="outdoor-score">
-
-<div class="score-left">
-
-<h2>Outdoor Score</h2>
-
-<div class="score">
-
-92<span>/100</span>
-
-</div>
-
-<p>Excellent outdoor day.</p>
-
-</div>
-
-<div class="score-right">
-
-<h3>Today's Highlights</h3>
-
-<ul>
-
-<li>🎆 Fireworks tonight — Excellent</li>
-
-<li>🏍 Excellent riding weather</li>
-
-<li>☀️ UV High after 11 AM</li>
-
-</ul>
-
-</div>
-
-</section>
-
-<section class="family-grid">
-
-<div class="card dad">
-<h3>👨 Dad</h3>
-
-<p>🐕 Dog Walking</p>
-<p>🚤 Boating</p>
-<p>🎯 Shooting</p>
-<p>🌩 Storm Watching</p>
-
-</div>
-
-<div class="card mom">
-<h3>👩 Mom</h3>
-
-<p>🚤 Boating</p>
-<p>🎯 Shooting</p>
-<p>🌳 General Outdoors</p>
-
-</div>
-
-<div class="card nathan">
-<h3>🌱 Nathan</h3>
-
-<p>🌱 Gardening</p>
-<p>🔥 Grilling</p>
-<p>🌳 General Outdoors</p>
-
-</div>
-
-<div class="card kelsey">
-<h3>☀️ Kelsey</h3>
-
-<p>☀️ UV Index</p>
-<p>🌡 Heat</p>
-<p>🌳 General Outdoors</p>
-
-</div>
-
-<div class="card micah">
-<h3>🏍 Micah</h3>
-
-<p>🏍 Motorcycle</p>
-<p>🌳 General Outdoors</p>
-<p>🌩 Storm Watching</p>
-
-</div>
-
-</section>
-
-</main>
-
-<script src="js/script.js"></script>
-
+    <nav class="bottom-nav">
+      <a class="active" href="#">🏠<span>Home</span></a>
+      <a href="#">⛈️<span>Storm Center</span></a>
+      <a href="#">🌿<span>Garden Center</span></a>
+      <a href="#">🔔<span>Alerts</span></a>
+      <a href="#">⚙️<span>Settings</span></a>
+    </nav>
+  </div>
+  <script src="js/script.js"></script>
 </body>
-
 </html>
