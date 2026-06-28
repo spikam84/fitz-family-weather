@@ -1,0 +1,175 @@
+:root {
+  --bg: #f4f7fb;
+  --card: #ffffff;
+  --text: #102033;
+  --muted: #5d6b7a;
+  --blue: #1f6feb;
+  --green: #1f8f3a;
+  --purple: #6f42c1;
+  --orange: #f97316;
+  --border: #d9e2ef;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.hero {
+  background: linear-gradient(135deg, #184e9e, #2f80ed);
+  color: white;
+  padding: 32px;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+}
+
+.eyebrow {
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.hero h1 {
+  margin: 8px 0;
+  font-size: 42px;
+}
+
+.location {
+  opacity: 0.9;
+}
+
+.current-temp {
+  text-align: right;
+}
+
+.current-temp span {
+  display: block;
+  font-size: 56px;
+  font-weight: bold;
+}
+
+.current-temp small {
+  font-size: 16px;
+}
+
+.app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.score-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 28px;
+  margin-top: -20px;
+  margin-bottom: 24px;
+  box-shadow: 0 12px 30px rgba(16, 32, 51, 0.12);
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.label {
+  color: var(--muted);
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.score-card h2 {
+  margin: 0;
+  font-size: 72px;
+  color: var(--green);
+}
+
+.score-card h2 span {
+  font-size: 28px;
+  color: var(--muted);
+}
+
+.summary {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.why-box {
+  border-left: 2px solid var(--border);
+  padding-left: 24px;
+  min-width: 260px;
+  font-size: 18px;
+}
+
+.family-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.person-card {
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: 22px;
+  padding: 22px;
+  box-shadow: 0 8px 20px rgba(16, 32, 51, 0.08);
+}
+
+.person-card h3 {
+  margin-top: 0;
+  font-size: 30px;
+}
+
+.person-card p {
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+.dad h3,
+.nathan h3 {
+  color: var(--green);
+}
+
+.mom h3 {
+  color: var(--blue);
+}
+
+.kelsey h3 {
+  color: var(--purple);
+}
+
+.micah h3 {
+  color: var(--orange);
+}
+
+.family h3 {
+  color: #9a6700;
+}
+
+@media (max-width: 750px) {
+  .hero,
+  .score-card {
+    flex-direction: column;
+    text-align: left;
+  }
+
+  .current-temp {
+    text-align: left;
+  }
+
+  .family-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero h1 {
+    font-size: 32px;
+  }
+}
