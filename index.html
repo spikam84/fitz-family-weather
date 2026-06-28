@@ -1,86 +1,130 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fitz Family Weather</title>
-  <link rel="stylesheet" href="css/style.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Fitz Family Dashboard</title>
+
+<link rel="stylesheet" href="css/style.css">
+
 </head>
 
 <body>
-  <header class="hero">
-    <div>
-      <p class="eyebrow">Quad Cities Family Weather</p>
-      <h1>Good Morning, Fitz Family ☀️</h1>
-      <p class="location">Bettendorf / Quad Cities</p>
-    </div>
 
-    <div class="current-temp">
-      <span>72°F</span>
-      <small>Sunny · Feels like 72°</small>
-    </div>
-  </header>
+<header class="hero">
 
-  <main class="app">
-    <section class="score-card">
-      <div>
-        <p class="label">Outdoor Score</p>
-        <h2>92<span>/100</span></h2>
-        <p class="summary">Excellent outdoor day.</p>
-      </div>
+<div class="title-area">
+<div class="eyebrow">QUAD CITIES FAMILY DASHBOARD</div>
 
-      <div class="why-box">
-        <p>⭐ Morning: Excellent</p>
-        <p>👍 Afternoon: Good</p>
-        <p>⭐ Evening: Excellent</p>
-      </div>
-    </section>
+<h1>Good Morning, Fitz Family ☀️</h1>
 
-    <section class="family-grid">
-      <article class="person-card dad">
-        <h3>Dad</h3>
-        <p>🐕 Dog Walk — Excellent</p>
-        <p>🚤 Boating — Great until 3 PM</p>
-        <p>🌪 Storm Watching — Quiet Today</p>
-      </article>
+<p>Bettendorf • Quad Cities</p>
+</div>
 
-      <article class="person-card mom">
-        <h3>Mom</h3>
-        <p>🚤 Boating — Great</p>
-        <p>🌸 Patio Weather — Excellent</p>
-        <p>🛍 Errands — Comfortable</p>
-      </article>
+<div class="weather-now">
 
-      <article class="person-card nathan">
-        <h3>Nathan</h3>
-        <p>🌱 Gardening — Excellent</p>
-        <p>💧 Watering — Skip, rain tonight</p>
-        <p>🎯 Range Day — Very Good</p>
-      </article>
+<div class="temp">72°F</div>
 
-      <article class="person-card kelsey">
-        <h3>Kelsey</h3>
-        <p>☀️ UV Index — High 11 AM–4 PM</p>
-        <p>🌡 Heat Index — Near 96°F</p>
-        <p>🕘 Best Outside — 6–9 AM</p>
-      </article>
+<div class="conditions">
+Sunny<br>
+Feels Like 72°
+</div>
 
-      <article class="person-card micah">
-        <h3>Micah</h3>
-        <p>🏍 Motorcycle — Perfect</p>
-        <p>🥩 Grilling — Perfect</p>
-        <p>🎆 Fireworks — Great after sunset</p>
-      </article>
+</div>
 
-      <article class="person-card family">
-        <h3>Family</h3>
-        <p>🌅 Sunset — 7:48 PM</p>
-        <p>🌙 Moon — Waxing Crescent</p>
-        <p>🛡 Severe Weather — None Expected</p>
-      </article>
-    </section>
-  </main>
+</header>
 
-  <script src="js/script.js"></script>
+<main class="container">
+
+<section class="outdoor-score">
+
+<div class="score-left">
+
+<h2>Outdoor Score</h2>
+
+<div class="score">
+
+92<span>/100</span>
+
+</div>
+
+<p>Excellent outdoor day.</p>
+
+</div>
+
+<div class="score-right">
+
+<h3>Today's Highlights</h3>
+
+<ul>
+
+<li>🎆 Fireworks tonight — Excellent</li>
+
+<li>🏍 Excellent riding weather</li>
+
+<li>☀️ UV High after 11 AM</li>
+
+</ul>
+
+</div>
+
+</section>
+
+<section class="family-grid">
+
+<div class="card dad">
+<h3>👨 Dad</h3>
+
+<p>🐕 Dog Walking</p>
+<p>🚤 Boating</p>
+<p>🎯 Shooting</p>
+<p>🌩 Storm Watching</p>
+
+</div>
+
+<div class="card mom">
+<h3>👩 Mom</h3>
+
+<p>🚤 Boating</p>
+<p>🎯 Shooting</p>
+<p>🌳 General Outdoors</p>
+
+</div>
+
+<div class="card nathan">
+<h3>🌱 Nathan</h3>
+
+<p>🌱 Gardening</p>
+<p>🔥 Grilling</p>
+<p>🌳 General Outdoors</p>
+
+</div>
+
+<div class="card kelsey">
+<h3>☀️ Kelsey</h3>
+
+<p>☀️ UV Index</p>
+<p>🌡 Heat</p>
+<p>🌳 General Outdoors</p>
+
+</div>
+
+<div class="card micah">
+<h3>🏍 Micah</h3>
+
+<p>🏍 Motorcycle</p>
+<p>🌳 General Outdoors</p>
+<p>🌩 Storm Watching</p>
+
+</div>
+
+</section>
+
+</main>
+
+<script src="js/script.js"></script>
+
 </body>
+
 </html>
