@@ -143,8 +143,12 @@ function updateOutdoorScore(weather) {
 
   const rating = getRating(score);
 
-  document.querySelector(".score-number").innerHTML =
-    `${score}<span>/100</span>`;
+document.querySelector(".big-stars").textContent = rating.stars;
+document.querySelector(".score-word").textContent = rating.word;
+
+document.querySelector(".score-reasons").innerHTML = `
+  ${getOutdoorReasons(weather).map(reason => `<p>${reason}</p>`).join("")}
+`;
 
   document.querySelector(".score-card h3").textContent = rating.word;
   document.querySelector(".score-card p").textContent = rating.message;
@@ -173,5 +177,33 @@ function getRating(score) {
   }
 
   return { stars: "☆☆☆☆☆", word: "Skip", message: "Better indoor plans today." };
+}function getOutdoorReasons(weather) {
+  const reasons = [];
+
+  if (weather.wind < 12) {
+    reasons.push("✅ Comfortable wind");
+  } else if (weather.wind < 20) {
+    reasons.push("⚠️ Breezy conditions");
+  } else {
+    reasons.push("⚠️ Wind may limit outdoor plans");
+  }
+
+  const rainyOrStormyCodes = [51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99];
+
+  if (!rainyOrStormyCodes.includes(weather.code)) {
+    reasons.push("✅ Dry conditions");
+  } else {
+    reasons.push("⚠️ Rain or storms possible");
+  }
+
+  if (weather.feelsLike >= 90) {
+    reasons.push("⚠️ Heat index above 90°");
+  } else if (weather.feelsLike <= 45) {
+    reasons.push("⚠️ Chilly outside");
+  } else {
+    reasons.push("✅ Comfortable temperature");
+  }
+
+  return reasons;
 }
 loadWeather();
