@@ -150,8 +150,6 @@ document.querySelector(".score-reasons").innerHTML = `
   ${getOutdoorReasons(weather).map(reason => `<p>${reason}</p>`).join("")}
 `;
 
-  document.querySelector(".score-card h3").textContent = rating.word;
-  document.querySelector(".big-stars").textContent = rating.stars;
 }
 
 function getRating(score) {
