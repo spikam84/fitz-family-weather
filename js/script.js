@@ -151,7 +151,6 @@ document.querySelector(".score-reasons").innerHTML = `
 `;
 
   document.querySelector(".score-card h3").textContent = rating.word;
-  document.querySelector(".score-card p").textContent = rating.message;
   document.querySelector(".big-stars").textContent = rating.stars;
 }
 
