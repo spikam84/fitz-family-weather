@@ -94,7 +94,13 @@ async function loadWeather() {
         hour: "numeric",
         minute: "2-digit"
       })}`;
-
+updateOutdoorScore({
+  temp: current.temperature_2m,
+  feelsLike: current.apparent_temperature,
+  humidity: current.relative_humidity_2m,
+  wind: current.wind_speed_10m,
+  code: current.weather_code
+});
   } catch (error) {
     console.error("Weather failed to load", error);
     document.querySelector(".weather-card h2").textContent =
@@ -108,5 +114,64 @@ function formatTime(timeString) {
     minute: "2-digit"
   });
 }
+function updateOutdoorScore(weather) {
+  let score = 100;
 
+  // Temperature comfort
+  if (weather.feelsLike >= 90) score -= 18;
+  else if (weather.feelsLike >= 85) score -= 10;
+  else if (weather.feelsLike <= 32) score -= 20;
+  else if (weather.feelsLike <= 45) score -= 10;
+
+  // Humidity comfort
+  if (weather.humidity >= 75) score -= 10;
+  else if (weather.humidity >= 65) score -= 5;
+
+  // Wind comfort
+  if (weather.wind >= 25) score -= 18;
+  else if (weather.wind >= 18) score -= 10;
+  else if (weather.wind >= 12) score -= 5;
+
+  // Weather condition penalty
+  const rainyOrStormyCodes = [51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99];
+  const snowyCodes = [71, 73, 75];
+
+  if (rainyOrStormyCodes.includes(weather.code)) score -= 25;
+  if (snowyCodes.includes(weather.code)) score -= 30;
+
+  score = Math.max(0, Math.min(100, Math.round(score)));
+
+  const rating = getRating(score);
+
+  document.querySelector(".score-number").innerHTML =
+    `${score}<span>/100</span>`;
+
+  document.querySelector(".score-card h3").textContent = rating.word;
+  document.querySelector(".score-card p").textContent = rating.message;
+  document.querySelector(".big-stars").textContent = rating.stars;
+}
+
+function getRating(score) {
+  if (score >= 90) {
+    return { stars: "★★★★★", word: "Perfect", message: "Excellent outdoor day!" };
+  }
+
+  if (score >= 80) {
+    return { stars: "★★★★☆", word: "Great", message: "Great day to be outside." };
+  }
+
+  if (score >= 65) {
+    return { stars: "★★★☆☆", word: "Good", message: "Good, but check details." };
+  }
+
+  if (score >= 50) {
+    return { stars: "★★☆☆☆", word: "Fair", message: "Okay with some caution." };
+  }
+
+  if (score >= 30) {
+    return { stars: "★☆☆☆☆", word: "Poor", message: "Not ideal outside." };
+  }
+
+  return { stars: "☆☆☆☆☆", word: "Skip", message: "Better indoor plans today." };
+}
 loadWeather();
