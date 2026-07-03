@@ -71,3 +71,57 @@
   font-size: 22px;
   margin: 12px 0;
 }
+
+/* ---------- FITZ WEATHER HQ HEADER ---------- */
+
+.brand {
+    gap: 18px;
+}
+
+.logo {
+    width: 78px;
+    height: 78px;
+    object-fit: contain;
+    font-size: 0;
+    flex-shrink: 0;
+}
+
+.brand-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.brand-text h1 {
+    margin: 0;
+    font-size: 28px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.brand-text h2 {
+    margin: 3px 0;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--muted);
+}
+
+.brand-text p {
+    margin: 2px 0 0;
+    color: var(--muted);
+}
+
+@media (max-width:680px){
+
+    .logo{
+        width:52px;
+        height:52px;
+    }
+
+    .brand-text h1{
+        font-size:18px;
+    }
+
+    .brand-text h2{
+        font-size:12px;
+    }
+}
