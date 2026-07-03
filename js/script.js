@@ -103,6 +103,7 @@ updateOutdoorScore({
   code: current.weather_code
 });
 updateFireworksForecast(data);
+updateStormHighlight(data);
   } catch (error) {
     console.error("Weather failed to load", error);
     document.querySelector(".weather-card h2").textContent =
@@ -258,5 +259,44 @@ function updateFireworksForecast(data) {
   document.getElementById("fireworks-message").textContent = message;
   document.getElementById("fireworks-reasons").innerHTML =
     reasons.map(reason => `<p>${reason}</p>`).join("");
+}
+function updateStormHighlight(data) {
+  const hourly = data.hourly;
+  const now = new Date();
+
+  const tonight = hourly.time
+    .map((time, index) => ({ time: new Date(time), index }))
+    .filter(item => {
+      const hour = item.time.getHours();
+      return item.time >= now && hour >= 18 && hour <= 23;
+    });
+
+  let title = "Storms Not Expected";
+  let message = "Quiet through the evening";
+  let icon = "⛈️";
+
+  for (const hour of tonight) {
+    const code = hourly.weather_code[hour.index];
+    const rain = hourly.precipitation_probability[hour.index];
+
+    // Thunderstorms
+    if ([95, 96, 99].includes(code)) {
+      title = "Storm Risk";
+      message = "Storms possible this evening";
+      icon = "🌩️";
+      break;
+    }
+
+    // Heavy rain
+    if (rain >= 60) {
+      title = "Storms Possible";
+      message = "Keep an eye on the radar";
+      icon = "🌧️";
+    }
+  }
+
+  document.getElementById("storm-title").textContent = title;
+  document.getElementById("storm-message").textContent = message;
+  document.getElementById("storm-icon").textContent = icon;
 }
 loadWeather();
