@@ -31,3 +31,43 @@
   font-size: 24px;
   margin: 16px 0;
 }
+.fireworks-card {
+  margin: 18px 0;
+  padding: 26px;
+  background: linear-gradient(145deg, rgba(17, 47, 78, 0.96), rgba(7, 22, 39, 0.96));
+  border: 1px solid var(--line);
+  border-left: 6px solid var(--gold);
+  border-radius: 22px;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+}
+
+.fireworks-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.fireworks-icon {
+  font-size: 46px;
+}
+
+.fireworks-header h2 {
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.fireworks-header p {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+
+.fireworks-recommendation h3 {
+  font-size: 36px;
+  margin: 22px 0 8px;
+}
+
+.fireworks-recommendation p,
+.fireworks-reasons p {
+  font-size: 22px;
+  margin: 12px 0;
+}

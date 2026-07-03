@@ -102,6 +102,7 @@ updateOutdoorScore({
   wind: current.wind_speed_10m,
   code: current.weather_code
 });
+updateFireworksForecast(data);
   } catch (error) {
     console.error("Weather failed to load", error);
     document.querySelector(".weather-card h2").textContent =
@@ -203,5 +204,59 @@ function getRating(score) {
   }
 
   return reasons;
+}
+function updateFireworksForecast(data) {
+  const hourly = data.hourly;
+  const now = new Date();
+
+  const eveningHours = hourly.time
+    .map((time, index) => ({ time: new Date(time), index }))
+    .filter(item => {
+      const hour = item.time.getHours();
+      return item.time >= now && hour >= 20 && hour <= 23;
+    });
+
+  if (eveningHours.length === 0) return;
+
+  const best = eveningHours[0];
+  const i = best.index;
+
+  const wind = hourly.wind_speed_10m[i];
+  const rainChance = hourly.precipitation_probability[i];
+  const code = hourly.weather_code[i];
+  const feelsLike = hourly.apparent_temperature[i];
+
+  let status = "🟢 Go For It";
+  let message = "Looks like a great night to light them off.";
+  const reasons = [];
+
+  const stormCodes = [95, 96, 99];
+  const rainCodes = [61, 63, 65, 80, 81, 82];
+
+  if (stormCodes.includes(code) || rainChance >= 60) {
+    status = "🔴 Not Tonight";
+    message = "I'd save them for another evening.";
+    reasons.push("✖ Storms or rain risk is too high");
+  } else if (wind >= 15 || rainChance >= 30) {
+    status = "🟡 Maybe Wait";
+    message = "I'd wait another hour. The wind should settle down.";
+    reasons.push("⚠ Wind or rain chance may be an issue");
+  } else {
+    reasons.push("✔ Dry conditions");
+    reasons.push("✔ Light wind");
+  }
+
+  if (feelsLike >= 90) {
+    reasons.push("⚠ Warm evening");
+  } else {
+    reasons.push("✔ Comfortable evening");
+  }
+
+  reasons.push(`🕘 Best lighting time: ${formatTime(hourly.time[i])}`);
+
+  document.getElementById("fireworks-status").textContent = status;
+  document.getElementById("fireworks-message").textContent = message;
+  document.getElementById("fireworks-reasons").innerHTML =
+    reasons.map(reason => `<p>${reason}</p>`).join("");
 }
 loadWeather();
