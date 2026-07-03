@@ -51,10 +51,11 @@ const weatherIcons = {
 
 async function loadWeather() {
   const url =
-    `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
-    `&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m` +
-    `&daily=sunrise,sunset` +
-    `&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FChicago`;
+  `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
+  `&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m` +
+  `&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,precipitation_probability,cloud_cover` +
+  `&daily=sunrise,sunset` +
+  `&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FChicago`;
 
   try {
     const response = await fetch(url);
