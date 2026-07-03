@@ -125,3 +125,14 @@
         font-size:12px;
     }
 }
+.radar-button {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--blue);
+  border-radius: 10px;
+  color: var(--blue);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 800;
+}
