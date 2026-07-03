@@ -53,7 +53,7 @@ async function loadWeather() {
   const url =
   `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
   `&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m` +
-  `&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,precipitation_probability,cloud_cover` +
+ &hourly=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,precipitation_probability,cloud_cover,uv_index
   `&daily=sunrise,sunset` +
   `&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FChicago`;
 
@@ -104,6 +104,8 @@ updateOutdoorScore({
 });
 updateFireworksForecast(data);
 updateStormHighlight(data);
+updateFireworksHighlight();
+updateUVHighlight(data);
   } catch (error) {
     console.error("Weather failed to load", error);
     document.querySelector(".weather-card h2").textContent =
@@ -298,5 +300,48 @@ function updateStormHighlight(data) {
   document.getElementById("storm-title").textContent = title;
   document.getElementById("storm-message").textContent = message;
   document.getElementById("storm-icon").textContent = icon;
+}
+function updateFireworksHighlight() {
+  const status = document.getElementById("fireworks-status").textContent;
+  const message = document.getElementById("fireworks-message").textContent;
+
+  document.getElementById("fireworks-highlight-title").textContent =
+    status.replace("🟢 ", "").replace("🟡 ", "").replace("🔴 ", "");
+
+  document.getElementById("fireworks-highlight-message").textContent = message;
+}
+
+function updateUVHighlight(data) {
+  const hourly = data.hourly;
+  const now = new Date();
+
+  const todayHours = hourly.time
+    .map((time, index) => ({ time: new Date(time), index }))
+    .filter(item => {
+      return item.time >= now && item.time.getHours() >= 10 && item.time.getHours() <= 16;
+    });
+
+  if (todayHours.length === 0) return;
+
+  const maxUV = Math.max(
+    ...todayHours.map(item => hourly.uv_index[item.index] ?? 0)
+  );
+
+  let title = "UV Low";
+  let message = "Low UV risk today";
+
+  if (maxUV >= 8) {
+    title = "UV Very High";
+    message = "Use sun protection";
+  } else if (maxUV >= 6) {
+    title = "UV High";
+    message = "Use sun protection after 11 AM";
+  } else if (maxUV >= 3) {
+    title = "UV Moderate";
+    message = "Some sun protection recommended";
+  }
+
+  document.getElementById("uv-title").textContent = title;
+  document.getElementById("uv-message").textContent = message;
 }
 loadWeather();
