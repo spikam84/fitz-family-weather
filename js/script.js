@@ -344,3 +344,7 @@ function updateUVHighlight(data) {
   document.getElementById("uv-message").textContent = message;
 }
 loadWeather();
+
+document.querySelector(".refresh-button").addEventListener("click", () => {
+  loadWeather();
+});
