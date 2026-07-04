@@ -198,7 +198,7 @@ function formatTime(timeString) {
     hour: "numeric",
     minute: "2-digit"
   });
-}}
+}
 function updateOutdoorScore(weather) {
   let score = 100;
 
