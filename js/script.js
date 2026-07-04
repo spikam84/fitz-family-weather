@@ -192,7 +192,7 @@ document.querySelector(".score-reasons").innerHTML = `
 <p>💾 No cached weather available</p>
 <p>↻ Tap Refresh when service returns</p>
 `;
-}
+}}
 function formatTime(timeString) {
   return new Date(timeString).toLocaleTimeString([], {
     hour: "numeric",
