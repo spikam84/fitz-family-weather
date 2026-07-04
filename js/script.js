@@ -345,6 +345,12 @@ function updateUVHighlight(data) {
 }
 loadWeather();
 
-document.querySelector(".refresh-button").addEventListener("click", () => {
-  loadWeather();
+const refreshButton = document.querySelector(".refresh-button");
+
+refreshButton.addEventListener("click", async () => {
+  refreshButton.classList.add("spinning");
+
+  await loadWeather();
+
+  refreshButton.classList.remove("spinning");
 });
