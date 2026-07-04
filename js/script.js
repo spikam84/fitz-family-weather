@@ -60,6 +60,15 @@ async function loadWeather() {
     const response = await fetch(url);
     const data = await response.json();
 
+localStorage.setItem("cachedWeather", JSON.stringify(data));
+
+localStorage.setItem(
+    "cachedWeatherTime",
+    new Date().toLocaleTimeString([], {
+        hour: "numeric",
+        minute: "2-digit"
+    })
+);
     const current = data.current;
     const code = current.weather_code;
 
@@ -105,13 +114,48 @@ updateFireworksForecast(data);
 updateStormHighlight(data);
 updateFireworksHighlight();
 updateUVHighlight(data);
-  } catch (error) {
-    console.error("Weather failed to load", error);
-    document.querySelector(".weather-card h2").textContent =
-      "Weather unavailable";
-  }
-}
+} catch (error) {
+  console.error("Weather failed to load", error);
 
+  const cached = localStorage.getItem("cachedWeather");
+  const cachedTime = localStorage.getItem("cachedWeatherTime");
+
+  if (cached) {
+    const data = JSON.parse(cached);
+    const current = data.current;
+    const code = current.weather_code;
+
+    document.querySelector(".temperature").textContent =
+      `${Math.round(current.temperature_2m)}°F`;
+
+    document.querySelector(".weather-icon").textContent =
+      weatherIcons[code] || "❓";
+
+    document.querySelector(".weather-card h2").textContent =
+      weatherCodes[code] || "Current Weather";
+
+    document.querySelector(".weather-card p").textContent =
+      `Cached weather • ${cachedTime}`;
+
+    updateOutdoorScore({
+      temp: current.temperature_2m,
+      feelsLike: current.apparent_temperature,
+      humidity: current.relative_humidity_2m,
+      wind: current.wind_speed_10m,
+      code: current.weather_code
+    });
+
+    updateFireworksForecast(data);
+    updateStormHighlight(data);
+    updateFireworksHighlight();
+    updateUVHighlight(data);
+
+    return;
+  }
+
+  document.querySelector(".weather-card h2").textContent =
+    "Weather unavailable";
+}
 function formatTime(timeString) {
   return new Date(timeString).toLocaleTimeString([], {
     hour: "numeric",
