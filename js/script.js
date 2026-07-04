@@ -86,6 +86,12 @@ localStorage.setItem(
 
     const detailCards = document.querySelectorAll(".weather-details div");
 
+    document.querySelector(".weather-details").style.opacity = "1";
+
+    document.querySelector(".score-word").style.color = "var(--green)";
+document.querySelector(".big-stars").style.opacity = "1";
+document.querySelector(".score-reasons").style.opacity = "1";
+
     detailCards[0].querySelector("strong").textContent =
       `${Math.round(current.relative_humidity_2m)}%`;
 
@@ -153,22 +159,39 @@ updateUVHighlight(data);
     return;
   }
 
-  document.querySelector(".temperature").textContent = "--°";
-document.querySelector(".weather-icon").textContent = "⚠️";
+document.querySelector(".temperature").textContent = "--°";
+document.querySelector(".weather-icon").textContent = "📡";
 
 document.querySelector(".weather-card h2").textContent =
-  "Weather unavailable";
+    "Weather Unavailable";
 
 document.querySelector(".weather-card p").textContent =
-  "Unable to reach weather service";
+    "Waiting for weather service";
 
-document.querySelector(".weather-details").style.opacity = "0.35";
+// Fade the weather details
+document.querySelector(".weather-details").style.opacity = "0.25";
 
+// Clear the detail values
+const detailCards = document.querySelectorAll(".weather-details div");
+
+detailCards[0].querySelector("strong").textContent = "--";
+detailCards[1].querySelector("strong").textContent = "--";
+detailCards[2].querySelector("strong").textContent = "--";
+detailCards[3].querySelector("strong").textContent = "--";
+
+// Outdoor Score
 document.querySelector(".big-stars").textContent = "☆☆☆☆☆";
-document.querySelector(".score-word").textContent = "Unavailable";
+document.querySelector(".score-word").textContent = "Offline";
 
-document.querySelector(".score-reasons").innerHTML =
-  "<p>⚠ Waiting for weather data</p>";
+document.querySelector(".score-word").style.color = "var(--muted)";
+document.querySelector(".big-stars").style.opacity = "0.45";
+document.querySelector(".score-reasons").style.opacity = "0.75";
+
+document.querySelector(".score-reasons").innerHTML = `
+<p>📡 Weather service unavailable</p>
+<p>💾 No cached weather available</p>
+<p>↻ Tap Refresh when service returns</p>
+`;
 }
 function formatTime(timeString) {
   return new Date(timeString).toLocaleTimeString([], {
