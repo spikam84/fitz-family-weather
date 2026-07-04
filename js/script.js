@@ -153,8 +153,22 @@ updateUVHighlight(data);
     return;
   }
 
-  document.querySelector(".weather-card h2").textContent =
-    "Weather unavailable";
+  document.querySelector(".temperature").textContent = "--°";
+document.querySelector(".weather-icon").textContent = "⚠️";
+
+document.querySelector(".weather-card h2").textContent =
+  "Weather unavailable";
+
+document.querySelector(".weather-card p").textContent =
+  "Unable to reach weather service";
+
+document.querySelector(".weather-details").style.opacity = "0.35";
+
+document.querySelector(".big-stars").textContent = "☆☆☆☆☆";
+document.querySelector(".score-word").textContent = "Unavailable";
+
+document.querySelector(".score-reasons").innerHTML =
+  "<p>⚠ Waiting for weather data</p>";
 }
 function formatTime(timeString) {
   return new Date(timeString).toLocaleTimeString([], {
