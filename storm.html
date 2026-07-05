@@ -30,12 +30,12 @@
     <main>
 
 <section class="storm-hero large-card">
-  <div class="weather-icon">⚡</div>
+  <div class="weather-icon" id="storm-status-icon">🟢</div>
 
   <div>
-    <div class="temperature">QUIET</div>
+    <div class="temperature" id="storm-status-word">QUIET</div>
     <h2>Storm Status</h2>
-    <p>No active severe weather.</p>
+    <p id="storm-status-message">Checking storm conditions...</p>
   </div>
 </section>
 
@@ -88,5 +88,8 @@
       <a href="#">⚙️<span>Settings</span></a>
     </nav>
   </div>
+
+  <script src="js/storm.js"></script>
+  
 </body>
 </html>
