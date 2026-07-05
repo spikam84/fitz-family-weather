@@ -200,11 +200,13 @@
   color: var(--muted);
 }
 
-#storm-status-icon {
+.storm-status-light {
     width: 34px;
     height: 34px;
     border-radius: 50%;
     background: #24d324;
     border: 3px solid #000;
     display: inline-block;
+    margin-bottom: 16px;
+    flex-shrink: 0;
 }
