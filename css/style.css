@@ -176,3 +176,26 @@
   font-size: 22px;
   font-weight: 900;
 }
+.storm-info-card {
+  margin-top: 18px;
+  padding: 26px;
+}
+
+.storm-alert-status {
+  padding: 20px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 16px;
+  background: rgba(255,255,255,.035);
+}
+
+.storm-alert-status strong {
+  display: block;
+  font-size: 26px;
+  color: var(--green);
+  margin-bottom: 6px;
+}
+
+.storm-alert-status p {
+  margin: 0;
+  color: var(--muted);
+}
