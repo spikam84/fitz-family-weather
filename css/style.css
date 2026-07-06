@@ -247,3 +247,42 @@
     margin-top: 8px;
   }
 }
+
+.storm-live-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(130px, 1fr));
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.storm-live-item {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(103, 184, 255, 0.35);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+
+.storm-live-item span {
+  display: block;
+  font-size: 0.8rem;
+  opacity: 0.8;
+  margin-bottom: 6px;
+}
+
+.storm-live-item strong {
+  display: block;
+  font-size: 1.05rem;
+  color: #ffffff;
+}
+
+@media (max-width: 850px) {
+  .storm-live-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .storm-live-grid {
+    grid-template-columns: 1fr;
+  }
+}
