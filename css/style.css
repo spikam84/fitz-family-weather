@@ -210,3 +210,40 @@
     margin-bottom: 16px;
     flex-shrink: 0;
 }
+
+.storm-hero {
+  padding: 28px;
+}
+
+.storm-status-row {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+}
+
+.storm-status-light {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #24d324;
+  border: 3px solid #000;
+  box-shadow: 0 0 18px rgba(36, 211, 36, 0.6);
+  flex-shrink: 0;
+}
+
+.storm-status-text .temperature {
+  font-size: clamp(64px, 10vw, 118px);
+}
+
+@media (max-width: 680px) {
+  .storm-status-row {
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .storm-status-light {
+    width: 34px;
+    height: 34px;
+    margin-top: 8px;
+  }
+}
