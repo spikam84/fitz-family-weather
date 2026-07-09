@@ -33,7 +33,7 @@ const maxItems = 4;
 
 while (timeline.children.length > maxItems) {
     timeline.removeChild(timeline.lastElementChild);
-}
+}}
 function updateStormStatusFromCache() {
     clearStormTimeline();
   const cached = localStorage.getItem("cachedWeather");
