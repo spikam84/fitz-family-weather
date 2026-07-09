@@ -362,3 +362,21 @@ main,
     font-size: 32px;
   }
 }
+.timeline-time {
+    font-size: 0.85rem;
+    color: #9ca3af;
+    margin-bottom: 6px;
+}
+
+.timeline-title {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.timeline-message {
+    font-size: 0.95rem;
+    line-height: 1.4;
+}

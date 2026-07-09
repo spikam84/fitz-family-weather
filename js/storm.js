@@ -22,11 +22,17 @@ function addStormTimelineItem(title, message, time = new Date()) {
   item.className = "storm-timeline-item";
 
   item.innerHTML = `
-    <strong>${formatStormTime(time)} — ${title}</strong>
-    <p>${message}</p>
-  `;
+    <div class="timeline-time">${formatStormTime(time)}</div>
+    <div class="timeline-title">${title}</div>
+    <div class="timeline-message">${message}</div>
+`;
 
-  timeline.prepend(item);
+timeline.prepend(item);
+
+const maxItems = 4;
+
+while (timeline.children.length > maxItems) {
+    timeline.removeChild(timeline.lastElementChild);
 }
 function updateStormStatusFromCache() {
     clearStormTimeline();
@@ -79,7 +85,43 @@ statusLight.style.background = color;
 document.getElementById("storm-status-word").textContent = word;
 document.getElementById("storm-status-message").textContent = message;
 
-addStormTimelineItem("Storm Status Updated", message);
+// Always log the radar refresh
+addStormTimelineItem(
+    "RADAR",
+    "Radar refreshed."
+);
+
+if (word === "WATCHING") {
+
+    addStormTimelineItem(
+        "WEATHER",
+        "Rain expected around the next few hours."
+    );
+
+    addStormTimelineItem(
+        "STATUS",
+        "Storm probability increased."
+    );
+
+}
+
+if (word === "STORM RISK") {
+
+    addStormTimelineItem(
+        "ALERT",
+        "Thunderstorm risk detected."
+    );
+
+}
+
+if (word === "QUIET") {
+
+    addStormTimelineItem(
+        "STATUS",
+        "Conditions returned to Quiet."
+    );
+
+}
 }
 
 updateStormStatusFromCache();
