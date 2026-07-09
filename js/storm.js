@@ -1,4 +1,35 @@
+function formatStormTime(date) {
+  return date.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit"
+  });
+}
+
+function clearStormTimeline() {
+  const timeline = document.getElementById("storm-timeline");
+
+  if (!timeline) return;
+
+  timeline.innerHTML = "";
+}
+
+function addStormTimelineItem(title, message, time = new Date()) {
+  const timeline = document.getElementById("storm-timeline");
+
+  if (!timeline) return;
+
+  const item = document.createElement("div");
+  item.className = "storm-timeline-item";
+
+  item.innerHTML = `
+    <strong>${formatStormTime(time)} — ${title}</strong>
+    <p>${message}</p>
+  `;
+
+  timeline.prepend(item);
+}
 function updateStormStatusFromCache() {
+    clearStormTimeline();
   const cached = localStorage.getItem("cachedWeather");
 
   if (!cached) {
@@ -6,7 +37,9 @@ document.getElementById("storm-status-icon").style.background = "#808080";
     document.getElementById("storm-status-word").textContent = "OFFLINE";
     document.getElementById("storm-status-message").textContent =
       "No saved weather data available yet.";
-    return;
+     addStormTimelineItem("Storm Status Updated", message);
+      return;
+   
   }
 
   const data = JSON.parse(cached);
@@ -46,6 +79,7 @@ statusLight.style.background = color;
 document.getElementById("storm-status-word").textContent = word;
 document.getElementById("storm-status-message").textContent = message;
 
+addStormTimelineItem("Storm Status Updated", message);
 }
 
 updateStormStatusFromCache();
