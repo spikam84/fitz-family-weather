@@ -286,3 +286,79 @@
     grid-template-columns: 1fr;
   }
 }
+/* ---------- MOBILE OVERFLOW FIX ---------- */
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+img,
+iframe,
+video {
+  max-width: 100%;
+}
+
+.app-shell,
+main,
+.large-card,
+.weather-card,
+.score-card,
+.storm-hero,
+.radar-card,
+.storm-info-card,
+.fireworks-card {
+  max-width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 680px) {
+  .top-bar {
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .brand {
+    min-width: 0;
+  }
+
+  .brand-text {
+    min-width: 0;
+  }
+
+  .brand-text h1,
+  .brand-text h2,
+  .brand-text p {
+    overflow-wrap: anywhere;
+  }
+
+.storm-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+  .storm-status-text .temperature,
+  .temperature {
+    font-size: clamp(54px, 22vw, 82px);
+    letter-spacing: -0.04em;
+  }
+
+  .weather-card,
+  .storm-hero,
+  .large-card {
+    padding: 18px;
+  }
+
+  .score-rating {
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .score-word {
+    font-size: 32px;
+  }
+}
