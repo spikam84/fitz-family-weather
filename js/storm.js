@@ -86,6 +86,9 @@ statusLight.style.background = color;
 document.getElementById("storm-status-word").textContent = word;
 document.getElementById("storm-status-message").textContent = message;
 
+document.getElementById("storm-last-updated").textContent =
+    formatStormTime(new Date());
+    
 updateStormWatching(word);
 
 // Always log the radar refresh
@@ -169,3 +172,16 @@ function updateStormWatching(word) {
     safety.textContent = "Safety: --";
 }
 updateStormStatusFromCache();
+const refreshButton = document.querySelector(".refresh-button");
+
+if (refreshButton) {
+    refreshButton.addEventListener("click", () => {
+        refreshButton.classList.add("spinning");
+
+        updateStormStatusFromCache();
+
+        setTimeout(() => {
+            refreshButton.classList.remove("spinning");
+        }, 800);
+    });
+}
