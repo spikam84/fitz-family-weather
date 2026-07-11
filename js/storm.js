@@ -1,3 +1,6 @@
+// ----------------------------
+// Timeline Functions
+// ----------------------------
 function formatStormTime(date) {
   return date.toLocaleTimeString([], {
     hour: "numeric",
@@ -34,6 +37,9 @@ const maxItems = 4;
 while (timeline.children.length > maxItems) {
     timeline.removeChild(timeline.lastElementChild);
 }}
+// ----------------------------
+// Main Storm Status
+// ----------------------------
 function updateStormStatusFromCache() {
     clearStormTimeline();
   const cached = localStorage.getItem("cachedWeather");
@@ -129,6 +135,9 @@ if (word === "QUIET") {
 
 }
 }
+// ----------------------------
+// Storm Watching
+// ----------------------------
 function updateStormWatching(word) {
     const rating = document.getElementById("storm-watching-rating");
     const comfort = document.getElementById("storm-watching-comfort");
@@ -171,17 +180,87 @@ function updateStormWatching(word) {
     lightning.textContent = "Lightning: --";
     safety.textContent = "Safety: --";
 }
+// ----------------------------
+// Watches & Warnings
+// ----------------------------
+
+async function updateWarnings() {
+    const title = document.getElementById("storm-alert-title");
+    const message = document.getElementById("storm-alert-message");
+    const box = document.getElementById("storm-alert-box");
+
+    if (!title || !message || !box) return;
+
+    title.textContent = "Checking alerts...";
+    message.textContent = "Contacting the National Weather Service.";
+    box.style.borderLeft = "6px solid #808080";
+
+    try {
+        const latitude = 41.5245;
+        const longitude = -90.5157;
+
+        const response = await fetch(
+            `https://api.weather.gov/alerts/active?point=${latitude},${longitude}`
+        );
+
+        if (!response.ok) {
+            throw new Error(`NWS request failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const alerts = data.features || [];
+
+        document.getElementById("storm-active-watches").textContent =
+            alerts.length;
+
+        if (alerts.length === 0) {
+            title.textContent = "No Active Warnings";
+            message.textContent =
+                "No NWS watches or warnings for the Quad Cities.";
+            box.style.borderLeft = "6px solid #24d324";
+            return;
+        }
+
+        const alert = alerts[0].properties;
+
+        title.textContent = alert.event || "Weather Alert";
+        message.textContent =
+            `${alert.areaDesc || "Quad Cities area"} — ` +
+            `${alert.headline || alert.description || "See NWS for details."}`;
+
+        box.style.borderLeft = "6px solid #e53935";
+
+        addStormTimelineItem(
+            "ALERT",
+            alert.event || "Active NWS weather alert."
+        );
+
+    } catch (error) {
+        console.error("Unable to load NWS alerts:", error);
+
+        title.textContent = "Alerts Unavailable";
+        message.textContent =
+            "Unable to contact the National Weather Service.";
+        box.style.borderLeft = "6px solid #808080";
+    }
+}
+// ----------------------------
+// Page Startup and Refresh
+// ----------------------------
 updateStormStatusFromCache();
+updateWarnings();
+
 const refreshButton = document.querySelector(".refresh-button");
 
 if (refreshButton) {
-    refreshButton.addEventListener("click", () => {
-        refreshButton.classList.add("spinning");
+refreshButton.addEventListener("click", () => {
+    refreshButton.classList.add("spinning");
 
-        updateStormStatusFromCache();
+    updateStormStatusFromCache();
+    updateWarnings();
 
-        setTimeout(() => {
-            refreshButton.classList.remove("spinning");
-        }, 800);
-    });
+    setTimeout(() => {
+        refreshButton.classList.remove("spinning");
+    }, 800);
+});
 }
