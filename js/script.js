@@ -337,10 +337,16 @@ function updateFireworksForecast(data) {
 
   reasons.push(`🕘 Best lighting time: ${formatTime(hourly.time[i])}`);
 
-  document.getElementById("fireworks-status").textContent = status;
-  document.getElementById("fireworks-message").textContent = message;
-  document.getElementById("fireworks-reasons").innerHTML =
+const fireworksStatus = document.getElementById("fireworks-status");
+const fireworksMessage = document.getElementById("fireworks-message");
+const fireworksReasons = document.getElementById("fireworks-reasons");
+
+if (fireworksStatus && fireworksMessage && fireworksReasons) {
+  fireworksStatus.textContent = status;
+  fireworksMessage.textContent = message;
+  fireworksReasons.innerHTML =
     reasons.map(reason => `<p>${reason}</p>`).join("");
+}
 }
 function updateStormHighlight(data) {
   const hourly = data.hourly;
@@ -382,13 +388,26 @@ function updateStormHighlight(data) {
   document.getElementById("storm-icon").textContent = icon;
 }
 function updateFireworksHighlight() {
-  const status = document.getElementById("fireworks-status").textContent;
-  const message = document.getElementById("fireworks-message").textContent;
+  const statusElement = document.getElementById("fireworks-status");
+  const messageElement = document.getElementById("fireworks-message");
+  const highlightTitle = document.getElementById("fireworks-highlight-title");
+  const highlightMessage = document.getElementById("fireworks-highlight-message");
 
-  document.getElementById("fireworks-highlight-title").textContent =
-    status.replace("🟢 ", "").replace("🟡 ", "").replace("🔴 ", "");
+  if (
+    !statusElement ||
+    !messageElement ||
+    !highlightTitle ||
+    !highlightMessage
+  ) {
+    return;
+  }
 
-  document.getElementById("fireworks-highlight-message").textContent = message;
+  highlightTitle.textContent = statusElement.textContent
+    .replace("🟢 ", "")
+    .replace("🟡 ", "")
+    .replace("🔴 ", "");
+
+  highlightMessage.textContent = messageElement.textContent;
 }
 
 function updateUVHighlight(data) {
