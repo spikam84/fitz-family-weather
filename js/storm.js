@@ -188,6 +188,7 @@ async function updateWarnings() {
     const title = document.getElementById("storm-alert-title");
     const message = document.getElementById("storm-alert-message");
     const box = document.getElementById("storm-alert-box");
+    const activeWatches = document.getElementById("storm-active-watches");
 
     if (!title || !message || !box) return;
 
@@ -196,37 +197,80 @@ async function updateWarnings() {
     box.style.borderLeft = "6px solid #808080";
 
     try {
-        const latitude = 41.5245;
-        const longitude = -90.5157;
+        const quadCitiesAreas = [
+            "Scott",
+            "Rock Island",
+            "Muscatine",
+            "Clinton",
+            "Henry",
+            "Mercer",
+            "Louisa"
+        ];
 
-        const response = await fetch(
-            `https://api.weather.gov/alerts/active?point=${latitude},${longitude}`
-        );
+        const [iowaResponse, illinoisResponse] = await Promise.all([
+            fetch("https://api.weather.gov/alerts/active?area=IA"),
+            fetch("https://api.weather.gov/alerts/active?area=IL")
+        ]);
 
-        if (!response.ok) {
-            throw new Error(`NWS request failed: ${response.status}`);
+        if (!iowaResponse.ok || !illinoisResponse.ok) {
+            throw new Error("NWS alert request failed.");
         }
 
-        const data = await response.json();
-        const alerts = data.features || [];
+        const iowaData = await iowaResponse.json();
+        const illinoisData = await illinoisResponse.json();
 
-        document.getElementById("storm-active-watches").textContent =
-            alerts.length;
+const iowaAlerts = (iowaData.features || []).map(alert => ({
+    ...alert,
+    sourceState: "IA"
+}));
 
-        if (alerts.length === 0) {
+const illinoisAlerts = (illinoisData.features || []).map(alert => ({
+    ...alert,
+    sourceState: "IL"
+}));
+
+const allAlerts = [
+    ...iowaAlerts,
+    ...illinoisAlerts
+];
+
+const quadCitiesCounties = {
+    IA: ["Scott", "Muscatine", "Clinton", "Louisa"],
+    IL: ["Rock Island", "Henry", "Mercer"]
+};
+
+const localAlerts = allAlerts.filter(alert => {
+    const areaNames = (alert.properties.areaDesc || "")
+        .split(";")
+        .map(area => area.trim());
+
+    const allowedCounties =
+        quadCitiesCounties[alert.sourceState] || [];
+
+    return areaNames.some(area =>
+        allowedCounties.includes(area)
+    );
+});
+
+
+        if (activeWatches) {
+            activeWatches.textContent = localAlerts.length;
+        }
+
+        if (localAlerts.length === 0) {
             title.textContent = "No Active Warnings";
             message.textContent =
-                "No NWS watches or warnings for the Quad Cities.";
+                "No NWS watches or warnings for the Quad Cities region.";
             box.style.borderLeft = "6px solid #24d324";
             return;
         }
 
-        const alert = alerts[0].properties;
+        const alert = localAlerts[0].properties;
 
         title.textContent = alert.event || "Weather Alert";
         message.textContent =
-            `${alert.areaDesc || "Quad Cities area"} — ` +
-            `${alert.headline || alert.description || "See NWS for details."}`;
+            `${alert.areaDesc || "Quad Cities region"} — ` +
+            `${alert.headline || "See the National Weather Service for details."}`;
 
         box.style.borderLeft = "6px solid #e53935";
 
