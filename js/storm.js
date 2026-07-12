@@ -181,6 +181,49 @@ function updateStormWatching(word) {
     safety.textContent = "Safety: --";
 }
 // ----------------------------
+// Radar Awareness
+// ----------------------------
+async function updateRadarAwareness() {
+
+    const status = document.getElementById("radar-status");
+    const distance = document.getElementById("radar-distance");
+    const movement = document.getElementById("radar-movement");
+    const eta = document.getElementById("radar-eta");
+
+    if (!status) return;
+
+    status.textContent = "Checking...";
+    distance.textContent = "--";
+    movement.textContent = "--";
+    eta.textContent = "--";
+const radarUrl =
+    "https://mapservices.weather.noaa.gov/eventdriven/rest/services/radar/radar_base_reflectivity_time/ImageServer?f=pjson";
+
+try {
+    const response = await fetch(radarUrl);
+
+    if (!response.ok) {
+        throw new Error(`Radar request failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    console.log("MRMS RADAR DATA:", data);
+
+    status.textContent = "Radar service connected";
+    movement.textContent = "Not calculated yet";
+    eta.textContent = "Not calculated yet";
+
+} catch (error) {
+    console.error("Unable to load MRMS radar:", error);
+
+    status.textContent = "Radar unavailable";
+    distance.textContent = "--";
+    movement.textContent = "--";
+    eta.textContent = "--";
+}
+}
+// ----------------------------
 // Watches & Warnings
 // ----------------------------
 
@@ -309,7 +352,8 @@ refreshButton.addEventListener("click", () => {
     refreshButton.classList.add("spinning");
 
     updateStormStatusFromCache();
-    updateWarnings();
+updateRadarAwareness();
+updateWarnings();
 
     setTimeout(() => {
         refreshButton.classList.remove("spinning");
