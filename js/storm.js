@@ -265,14 +265,22 @@ const localAlerts = allAlerts.filter(alert => {
             return;
         }
 
-        const alert = localAlerts[0].properties;
+title.textContent = `Active Alerts (${localAlerts.length})`;
 
-        title.textContent = alert.event || "Weather Alert";
-        message.textContent =
-            `${alert.areaDesc || "Quad Cities region"} — ` +
-            `${alert.headline || "See the National Weather Service for details."}`;
+message.innerHTML = localAlerts
+    .map(alert => {
+        const details = alert.properties;
 
-        box.style.borderLeft = "6px solid #e53935";
+        return `
+            <div class="storm-alert-item">
+                <strong>${details.event || "Weather Alert"}</strong>
+                <span>${details.areaDesc || "Quad Cities region"}</span>
+            </div>
+        `;
+    })
+    .join("");
+
+box.style.borderLeft = "6px solid #e53935";
 
         addStormTimelineItem(
             "ALERT",
