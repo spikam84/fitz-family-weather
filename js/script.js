@@ -1,6 +1,12 @@
+// ----------------------------
+// Constants
+// ----------------------------
 const LAT = 41.5245;
 const LON = -90.5157;
 
+// ----------------------------
+// Weather Lookup Tables
+// ----------------------------
 const weatherCodes = {
   0: "Clear",
   1: "Mostly Clear",
@@ -49,6 +55,9 @@ const weatherIcons = {
   99: "⛈️"
 };
 
+// ----------------------------
+// Weather Engine
+// ----------------------------
 async function loadWeather() {
   const url =
   `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
@@ -193,12 +202,18 @@ document.querySelector(".score-reasons").innerHTML = `
 <p>↻ Tap Refresh when service returns</p>
 `;
 }}
+// ----------------------------
+// Utilities
+// ----------------------------
 function formatTime(timeString) {
   return new Date(timeString).toLocaleTimeString([], {
     hour: "numeric",
     minute: "2-digit"
   });
 }
+// ----------------------------
+// Outdoor Score
+// ----------------------------
 function updateOutdoorScore(weather) {
   let score = 100;
 
@@ -288,6 +303,10 @@ function getRating(score) {
 
   return reasons;
 }
+
+// ----------------------------
+// Fireworks Forecast
+// ----------------------------
 function updateFireworksForecast(data) {
   const hourly = data.hourly;
   const now = new Date();
@@ -348,6 +367,10 @@ if (fireworksStatus && fireworksMessage && fireworksReasons) {
     reasons.map(reason => `<p>${reason}</p>`).join("");
 }
 }
+
+// ----------------------------
+// Storm Highlight
+// ----------------------------
 function updateStormHighlight(data) {
   const hourly = data.hourly;
   const now = new Date();
@@ -387,6 +410,9 @@ function updateStormHighlight(data) {
   document.getElementById("storm-message").textContent = message;
   document.getElementById("storm-icon").textContent = icon;
 }
+// ----------------------------
+// Fireworks Highlight
+// ----------------------------
 function updateFireworksHighlight() {
   const statusElement = document.getElementById("fireworks-status");
   const messageElement = document.getElementById("fireworks-message");
@@ -413,7 +439,9 @@ function updateFireworksHighlight() {
 function updateUVHighlight(data) {
   const hourly = data.hourly;
   const now = new Date();
-
+// ----------------------------
+// UV Highlight
+// ----------------------------
   const todayHours = hourly.time
     .map((time, index) => ({ time: new Date(time), index }))
     .filter(item => {
@@ -443,6 +471,9 @@ function updateUVHighlight(data) {
   document.getElementById("uv-title").textContent = title;
   document.getElementById("uv-message").textContent = message;
 }
+// ----------------------------
+// Page Startup and Refresh
+// ----------------------------
 loadWeather();
 
 const refreshButton = document.querySelector(".refresh-button");
