@@ -1,4 +1,6 @@
-
+/* ----------------------------
+   Theme & Variables
+---------------------------- */
 :root {
   --bg: #06111f;
   --panel: #0c2037;
@@ -13,7 +15,9 @@
   --purple: #a66cff;
   --orange: #ff9f1c
 }
-
+/* ----------------------------
+   Global Layout
+---------------------------- */
 * {
   box-sizing: border-box
 }
@@ -96,7 +100,9 @@ main {
   border-radius: 22px;
   box-shadow: 0 18px 45px rgba(0, 0, 0, .35)
 }
-
+/* ----------------------------
+   Home Dashboard
+---------------------------- */
 .weather-card {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -255,7 +261,9 @@ main {
 .watch {
   color: var(--gold)
 }
-
+/* ----------------------------
+   Family Cards
+---------------------------- */
 .person-list {
   display: grid;
   gap: 14px
@@ -398,7 +406,9 @@ main {
 .micah button {
   color: var(--orange)
 }
-
+/* ----------------------------
+   Bottom Navigation
+---------------------------- */
 .bottom-nav {
   position: fixed;
   left: 24px;
@@ -433,7 +443,9 @@ main {
   color: var(--blue);
   background: rgba(57, 168, 255, .09)
 }
-
+/* ----------------------------
+   Home Responsive
+---------------------------- */
 @media(max-width:980px) {
 
   .hero-grid,
@@ -536,7 +548,9 @@ main {
     border-radius: 20px 20px 0 0
   }
 }
-
+/* ----------------------------
+   Outdoor Score
+---------------------------- */
 .score-number {
   display: none;
 }
@@ -569,7 +583,9 @@ main {
   font-size: 24px;
   margin: 16px 0;
 }
-
+/* ----------------------------
+   Fireworks
+---------------------------- */
 .fireworks-card {
   margin: 18px 0;
   padding: 26px;
@@ -611,7 +627,9 @@ main {
   margin: 12px 0;
 }
 
-/* ---------- FITZ WEATHER HQ HEADER ---------- */
+/* ----------------------------
+   Header
+---------------------------- */
 
 .brand {
   gap: 10px;
@@ -676,7 +694,9 @@ main {
   font-size: 13px;
   font-weight: 800;
 }
-
+/* ----------------------------
+   Refresh Animation
+---------------------------- */
 @keyframes spin {
   from {
     transform: rotate(0deg);
@@ -690,7 +710,9 @@ main {
 .refresh-button.spinning {
   animation: spin 0.8s linear;
 }
-
+/* ----------------------------
+   Storm Center
+---------------------------- */
 .radar-card {
   margin-top: 18px;
   padding: 26px;
@@ -777,7 +799,9 @@ main {
 .storm-status-text .temperature {
   font-size: clamp(64px, 10vw, 118px);
 }
-
+/* ----------------------------
+   Storm Responsive
+---------------------------- */
 @media (max-width: 680px) {
   .storm-status-row {
     align-items: flex-start;
@@ -831,7 +855,9 @@ main {
   }
 }
 
-/* ---------- MOBILE OVERFLOW FIX ---------- */
+/* ----------------------------
+   Mobile Overflow Fix
+---------------------------- */
 
 html,
 body {
@@ -907,7 +933,9 @@ main,
     font-size: 32px;
   }
 }
-
+/* ----------------------------
+   Timeline
+---------------------------- */
 .timeline-time {
   font-size: 0.85rem;
   color: #9ca3af;
