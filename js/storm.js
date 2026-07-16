@@ -197,7 +197,17 @@ async function updateRadarAwareness() {
     movement.textContent = "--";
     eta.textContent = "--";
 const radarUrl =
-    "https://mapservices.weather.noaa.gov/eventdriven/rest/services/radar/radar_base_reflectivity_time/ImageServer?f=pjson";
+    "https://mapservices.weather.noaa.gov/eventdriven/rest/services/radar/radar_base_reflectivity_time/ImageServer/getSamples" +
+    "?geometryType=esriGeometryPoint" +
+    "&geometry=" +
+    encodeURIComponent(JSON.stringify({
+        x: -90.5157,
+        y: 41.5245,
+        spatialReference: { wkid: 4326 }
+    })) +
+    "&returnFirstValueOnly=true" +
+    "&outFields=idp_validtime" +
+    "&f=json";
 
 try {
     const response = await fetch(radarUrl);
@@ -208,11 +218,28 @@ try {
 
     const data = await response.json();
 
-    console.log("MRMS RADAR DATA:", data);
+   const sample = data.samples?.[0];
+const pixelValues = sample?.value
+    ?.trim()
+    .split(/\s+/)
+    .map(Number);
 
-    status.textContent = "Radar service connected";
-    movement.textContent = "Not calculated yet";
-    eta.textContent = "Not calculated yet";
+const precipitationDetected =
+    Array.isArray(pixelValues) &&
+    pixelValues.length === 4 &&
+    pixelValues[3] > 0;
+
+if (precipitationDetected) {
+    status.textContent = "Precipitation detected over the area";
+} else {
+    status.textContent = "No precipitation over the area";
+}
+
+distance.textContent = "Searching...";
+movement.textContent = "Not calculated yet";
+eta.textContent = "Not calculated yet";
+
+console.log("MRMS SAMPLE:", sample);
 
 } catch (error) {
     console.error("Unable to load MRMS radar:", error);
