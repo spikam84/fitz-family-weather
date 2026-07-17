@@ -184,72 +184,158 @@ function updateStormWatching(word) {
 // Radar Awareness
 // ----------------------------
 async function updateRadarAwareness() {
-
     const status = document.getElementById("radar-status");
     const distance = document.getElementById("radar-distance");
     const movement = document.getElementById("radar-movement");
     const eta = document.getElementById("radar-eta");
 
-    if (!status) return;
+    if (!status || !distance || !movement || !eta) return;
 
     status.textContent = "Checking...";
-    distance.textContent = "--";
-    movement.textContent = "--";
-    eta.textContent = "--";
-const radarUrl =
-    "https://mapservices.weather.noaa.gov/eventdriven/rest/services/radar/radar_base_reflectivity_time/ImageServer/getSamples" +
-    "?geometryType=esriGeometryPoint" +
-    "&geometry=" +
-    encodeURIComponent(JSON.stringify({
-        x: -90.5157,
-        y: 41.5245,
-        spatialReference: { wkid: 4326 }
-    })) +
-    "&returnFirstValueOnly=true" +
-    "&outFields=idp_validtime" +
-    "&f=json";
+    distance.textContent = "Searching...";
+    movement.textContent = "Not calculated yet";
+    eta.textContent = "Not calculated yet";
 
-try {
-    const response = await fetch(radarUrl);
+    const centerLat = 41.5245;
+    const centerLon = -90.5157;
 
-    if (!response.ok) {
-        throw new Error(`Radar request failed: ${response.status}`);
+    const milesPerLatitudeDegree = 69;
+    const milesPerLongitudeDegree =
+        69 * Math.cos(centerLat * Math.PI / 180);
+
+    const directions = [
+        { name: "N", north: 1, east: 0 },
+        { name: "NE", north: 1, east: 1 },
+        { name: "E", north: 0, east: 1 },
+        { name: "SE", north: -1, east: 1 },
+        { name: "S", north: -1, east: 0 },
+        { name: "SW", north: -1, east: -1 },
+        { name: "W", north: 0, east: -1 },
+        { name: "NW", north: 1, east: -1 }
+    ];
+
+    const scanDistances = [10, 25, 50];
+
+    const scanPoints = [
+        {
+            direction: "HERE",
+            miles: 0,
+            latitude: centerLat,
+            longitude: centerLon
+        }
+    ];
+
+    for (const miles of scanDistances) {
+        for (const direction of directions) {
+            const isDiagonal =
+                direction.north !== 0 && direction.east !== 0;
+
+            const componentMiles = isDiagonal
+                ? miles / Math.sqrt(2)
+                : miles;
+
+            scanPoints.push({
+                direction: direction.name,
+                miles,
+                latitude:
+                    centerLat +
+                    (direction.north * componentMiles) /
+                    milesPerLatitudeDegree,
+                longitude:
+                    centerLon +
+                    (direction.east * componentMiles) /
+                    milesPerLongitudeDegree
+            });
+        }
     }
 
-    const data = await response.json();
+    async function sampleRadarPoint(point) {
+const params = new URLSearchParams({
+    geometry: JSON.stringify({
+        x: point.longitude,
+        y: point.latitude,
+        spatialReference: { wkid: 4326 }
+    }),
+    geometryType: "esriGeometryPoint",
+    returnGeometry: "false",
+    returnCatalogItems: "false",
+    returnAllPixelValues: "true",
+    f: "json"
+});
 
-   const sample = data.samples?.[0];
-const pixelValues = sample?.value
-    ?.trim()
-    .split(/\s+/)
-    .map(Number);
+const radarUrl =
+    "https://mapservices.weather.noaa.gov/eventdriven/rest/services/radar/radar_base_reflectivity_time/ImageServer/identify?" +
+    params.toString();
 
-const precipitationDetected =
-    Array.isArray(pixelValues) &&
-    pixelValues.length === 4 &&
-    pixelValues[3] > 0;
+const response = await fetch(radarUrl);
 
-if (precipitationDetected) {
-    status.textContent = "Precipitation detected over the area";
-} else {
-    status.textContent = "No precipitation over the area";
+if (!response.ok) {
+    throw new Error(`Radar request failed: ${response.status}`);
 }
 
-distance.textContent = "Searching...";
-movement.textContent = "Not calculated yet";
-eta.textContent = "Not calculated yet";
+        const data = await response.json();
 
-console.log("MRMS SAMPLE:", sample);
+       const precipitationDetected =
+    data.value !== "NoData";
 
-} catch (error) {
-    console.error("Unable to load MRMS radar:", error);
+      return {
+    direction: point.direction,
+    miles: point.miles,
+    precipitation: precipitationDetected
+};
+    }
 
-    status.textContent = "Radar unavailable";
-    distance.textContent = "--";
-    movement.textContent = "--";
+    try {
+        const results = await Promise.all(
+            scanPoints.map(sampleRadarPoint)
+        );
+
+console.table(
+    results.map(result => ({
+        direction: result.direction,
+        miles: result.miles,
+        precipitation: result.precipitation
+    }))
+);
+
+const precipitationPoints = results
+    .filter(result => result.precipitation)
+    .sort((a, b) => a.miles - b.miles);
+
+        if (precipitationPoints.length === 0) {
+    status.textContent = "No precipitation detected";
+    distance.textContent = "None within 50 miles";
+    movement.textContent = "No movement to track";
     eta.textContent = "--";
+    return;
+        }
+
+        const nearest = precipitationPoints[0];
+
+        status.textContent = "Nearby precipitation detected";
+
+if (nearest.miles === 0) {
+    distance.textContent = "Over the Quad Cities";
+} else {
+    distance.textContent =
+        `About ${nearest.miles} mi ${nearest.direction}`;
 }
+
+movement.textContent = "Tracking coming soon";
+eta.textContent = "ETA unavailable";
+        
+
+    } catch (error) {
+        console.error("Unable to scan MRMS radar:", error);
+
+        status.textContent = "No precipitation detected";
+distance.textContent = "Clear within 50 miles";
+movement.textContent = "No movement to track";
+eta.textContent = "--";
+return;
+    }
 }
+
 // ----------------------------
 // Watches & Warnings
 // ----------------------------
@@ -370,6 +456,7 @@ box.style.borderLeft = "6px solid #e53935";
 // Page Startup and Refresh
 // ----------------------------
 updateStormStatusFromCache();
+updateRadarAwareness();
 updateWarnings();
 
 const refreshButton = document.querySelector(".refresh-button");
