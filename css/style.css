@@ -797,7 +797,7 @@ main {
 }
 
 .storm-status-text .temperature {
-  font-size: clamp(64px, 10vw, 118px);
+  font-size: clamp(44px, 6vw, 60px);
 }
 /* ----------------------------
    Storm Responsive

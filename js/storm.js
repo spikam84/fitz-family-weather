@@ -251,7 +251,7 @@ async function updateRadarAwareness() {
         }
     }
 
-    async function sampleRadarPoint(point) {
+    async function sampleRadarPoint(point, radarTime = null) {
 const params = new URLSearchParams({
     geometry: JSON.stringify({
         x: point.longitude,
@@ -264,6 +264,9 @@ const params = new URLSearchParams({
     returnAllPixelValues: "true",
     f: "json"
 });
+if (radarTime) {
+    params.set("time", radarTime.toString());
+}
 
 const radarUrl =
     "https://mapservices.weather.noaa.gov/eventdriven/rest/services/radar/radar_base_reflectivity_time/ImageServer/identify?" +
@@ -288,9 +291,21 @@ if (!response.ok) {
     }
 
     try {
-        const results = await Promise.all(
-            scanPoints.map(sampleRadarPoint)
-        );
+        const pastRadarTime =
+    Date.now() - (15 * 60 * 1000);
+
+const [results, pastResults] = await Promise.all([
+    Promise.all(
+        scanPoints.map(point =>
+            sampleRadarPoint(point)
+        )
+    ),
+    Promise.all(
+        scanPoints.map(point =>
+            sampleRadarPoint(point, pastRadarTime)
+        )
+    )
+]);
 
 console.table(
     results.map(result => ({
@@ -299,8 +314,19 @@ console.table(
         precipitation: result.precipitation
     }))
 );
+console.table(
+    pastResults.map(result => ({
+        direction: result.direction,
+        miles: result.miles,
+        precipitation: result.precipitation
+    }))
+);
 
 const precipitationPoints = results
+    .filter(result => result.precipitation)
+    .sort((a, b) => a.miles - b.miles);
+
+    const pastPrecipitationPoints = pastResults
     .filter(result => result.precipitation)
     .sort((a, b) => a.miles - b.miles);
 
@@ -317,7 +343,38 @@ const precipitationPoints = results
         }
 
         const nearest = precipitationPoints[0];
+const pastNearest = pastPrecipitationPoints[0];
 
+let movementText = "No clear movement detected";
+let etaText = "Unable to estimate";
+if (pastNearest) {
+    if (
+        nearest.direction === pastNearest.direction &&
+        nearest.miles < pastNearest.miles
+    ) {
+        movementText = `Approaching from ${nearest.direction}`;
+        const milesMoved = pastNearest.miles - nearest.miles;
+        const estimatedSpeed = milesMoved * 4;
+        if (estimatedSpeed > 0) {
+    const etaMinutes =
+        (nearest.miles / estimatedSpeed) * 60;
+
+    const roundedEta =
+        Math.ceil(etaMinutes / 15) * 15;
+
+    etaText = `About ${roundedEta} minutes`;
+}
+    } else if (
+        nearest.direction === pastNearest.direction &&
+        nearest.miles > pastNearest.miles
+    ) {
+        movementText = "Moving away";
+    } else if (
+        nearest.direction !== pastNearest.direction
+    ) {
+        movementText = "Shifting across the area";
+    }
+}
         status.textContent = "Nearby precipitation detected";
 
 if (nearest.miles === 0) {
@@ -337,8 +394,8 @@ if (nearest.miles === 0) {
         `Precipitation detected about ${nearest.miles} mi ${nearest.direction}.`
     );
 }
-movement.textContent = "Tracking coming soon";
-eta.textContent = "ETA unavailable";
+movement.textContent = movementText;
+eta.textContent = etaText;
         
 
     } catch (error) {
