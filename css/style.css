@@ -954,3 +954,24 @@ main,
   font-size: 0.95rem;
   line-height: 1.4;
 }
+.storm-timeline-item {
+    border-left: 4px solid #808080;
+    padding-left: 12px;
+    margin-bottom: 14px;
+}
+
+.timeline-status {
+    border-left-color: #24d324;
+}
+
+.timeline-radar {
+    border-left-color: #2196f3;
+}
+
+.timeline-alert {
+    border-left-color: #e53935;
+}
+
+.timeline-weather {
+    border-left-color: #ffd000;
+}

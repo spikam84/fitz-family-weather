@@ -23,6 +23,7 @@ function addStormTimelineItem(title, message, time = new Date()) {
 
   const item = document.createElement("div");
   item.className = "storm-timeline-item";
+  item.classList.add(`timeline-${title.toLowerCase()}`);
 
   item.innerHTML = `
     <div class="timeline-time">${formatStormTime(time)}</div>
@@ -85,6 +86,7 @@ let message = "No storms expected in the next several hours.";
       message = "Rain chances are elevated. Keep an eye on radar.";
     }
   }
+const previousStatus = localStorage.getItem("lastStormStatus");
 
 const statusLight = document.getElementById("storm-status-icon");
 
@@ -97,11 +99,7 @@ document.getElementById("storm-last-updated").textContent =
     
 updateStormWatching(word);
 
-// Always log the radar refresh
-addStormTimelineItem(
-    "RADAR",
-    "Radar refreshed."
-);
+
 
 if (word === "WATCHING") {
 
@@ -130,10 +128,14 @@ if (word === "QUIET") {
 
     addStormTimelineItem(
         "STATUS",
-        "Conditions returned to Quiet."
+        previousStatus && previousStatus !== "QUIET"
+            ? "Conditions returned to Quiet."
+            : "Conditions remain Quiet."
     );
 
 }
+
+localStorage.setItem("lastStormStatus", word);
 }
 // ----------------------------
 // Storm Watching
@@ -307,6 +309,10 @@ const precipitationPoints = results
     distance.textContent = "None within 50 miles";
     movement.textContent = "No movement to track";
     eta.textContent = "--";
+    addStormTimelineItem(
+    "RADAR",
+    "No precipitation detected within 50 miles."
+);
     return;
         }
 
@@ -320,7 +326,17 @@ if (nearest.miles === 0) {
     distance.textContent =
         `About ${nearest.miles} mi ${nearest.direction}`;
 }
-
+if (nearest.miles === 0) {
+    addStormTimelineItem(
+        "RADAR",
+        "Precipitation detected over the Quad Cities."
+    );
+} else {
+    addStormTimelineItem(
+        "RADAR",
+        `Precipitation detected about ${nearest.miles} mi ${nearest.direction}.`
+    );
+}
 movement.textContent = "Tracking coming soon";
 eta.textContent = "ETA unavailable";
         
@@ -438,10 +454,12 @@ message.innerHTML = localAlerts
 
 box.style.borderLeft = "6px solid #e53935";
 
-        addStormTimelineItem(
-            "ALERT",
-            alert.event || "Active NWS weather alert."
-        );
+        box.style.borderLeft = "6px solid #e53935";
+
+addStormTimelineItem(
+    "ALERT",
+    localAlerts[0].properties?.event || "Active NWS weather alert."
+);
 
     } catch (error) {
         console.error("Unable to load NWS alerts:", error);
