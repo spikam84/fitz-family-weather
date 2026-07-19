@@ -307,20 +307,6 @@ const [results, pastResults] = await Promise.all([
     )
 ]);
 
-console.table(
-    results.map(result => ({
-        direction: result.direction,
-        miles: result.miles,
-        precipitation: result.precipitation
-    }))
-);
-console.table(
-    pastResults.map(result => ({
-        direction: result.direction,
-        miles: result.miles,
-        precipitation: result.precipitation
-    }))
-);
 
 const precipitationPoints = results
     .filter(result => result.precipitation)
@@ -347,7 +333,15 @@ const pastNearest = pastPrecipitationPoints[0];
 
 let movementText = "No clear movement detected";
 let etaText = "Unable to estimate";
-if (pastNearest) {
+if (nearest.miles === 0) {
+    movementText = "Over the area now";
+    etaText = "Already here";
+}
+
+if (!pastNearest && nearest.miles !== 0) {
+    movementText = "New precipitation detected";
+}
+if (pastNearest && nearest.miles !== 0) {
     if (
         nearest.direction === pastNearest.direction &&
         nearest.miles < pastNearest.miles
@@ -360,9 +354,15 @@ if (pastNearest) {
         (nearest.miles / estimatedSpeed) * 60;
 
     const roundedEta =
-        Math.ceil(etaMinutes / 15) * 15;
+    Math.ceil(etaMinutes / 15) * 15;
 
+if (roundedEta >= 75) {
+    etaText = "More than 1 hour";
+} else if (roundedEta === 60) {
+    etaText = "About 1 hour";
+} else {
     etaText = `About ${roundedEta} minutes`;
+}
 }
     } else if (
         nearest.direction === pastNearest.direction &&
