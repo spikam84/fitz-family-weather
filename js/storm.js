@@ -51,7 +51,7 @@ if (!cached) {
     document.getElementById("storm-status-message").textContent =
         "No saved weather data available yet.";
 
-    updateStormWatching("OFFLINE");
+    updateStormWatching({ word: "OFFLINE" });
     addStormTimelineItem("STATUS", "No saved weather data available yet.");
     return;
 }
@@ -59,6 +59,7 @@ if (!cached) {
   const data = JSON.parse(cached);
   const hourly = data.hourly;
   const now = new Date();
+  const current = data.current;
 
   const nextHours = hourly.time
     .map((time, index) => ({ time: new Date(time), index }))
@@ -97,7 +98,12 @@ document.getElementById("storm-status-message").textContent = message;
 document.getElementById("storm-last-updated").textContent =
     formatStormTime(new Date());
     
-updateStormWatching(word);
+updateStormWatching({
+  word: word,
+  code: current.weather_code,
+  rainChance: hourly.precipitation_probability?.[0] ?? 0,
+  wind: current.wind_speed_10m
+});
 
 
 
@@ -140,47 +146,31 @@ localStorage.setItem("lastStormStatus", word);
 // ----------------------------
 // Storm Watching
 // ----------------------------
-function updateStormWatching(word) {
-    const rating = document.getElementById("storm-watching-rating");
-    const comfort = document.getElementById("storm-watching-comfort");
-    const rain = document.getElementById("storm-watching-rain");
-    const lightning = document.getElementById("storm-watching-lightning");
-    const safety = document.getElementById("storm-watching-safety");
+function updateStormWatching(weather) {
+  const rating = document.getElementById("storm-watching-rating");
+  const comfort = document.getElementById("storm-watching-comfort");
+  const rain = document.getElementById("storm-watching-rain");
+  const lightning = document.getElementById("storm-watching-lightning");
+  const safety = document.getElementById("storm-watching-safety");
 
-    if (!rating) return;
+  if (!rating) return;
 
-    if (word === "STORM RISK") {
-        rating.textContent = "★★☆☆☆ Watch From Inside";
-        comfort.textContent = "Comfort: Storm risk nearby";
-        rain.textContent = "Rain: Likely";
-        lightning.textContent = "Lightning: Possible";
-        safety.textContent = "Safety: Stay weather aware";
-        return;
-    }
-
-    if (word === "WATCHING") {
-        rating.textContent = "★★★☆☆ Fair";
-        comfort.textContent = "Comfort: Okay";
-        rain.textContent = "Rain: Possible soon";
-        lightning.textContent = "Lightning: Not confirmed";
-        safety.textContent = "Safety: Keep radar open";
-        return;
-    }
-
-    if (word === "QUIET") {
-        rating.textContent = "★★★★☆ Good";
-        comfort.textContent = "Comfort: Good for watching";
-        rain.textContent = "Rain: Not expected over us right now";
-        lightning.textContent = "Lightning: Not expected";
-        safety.textContent = "Safety: Continue monitoring radar";
-        return;
-    }
-
+  if (!weather || weather.word === "OFFLINE") {
     rating.textContent = "Checking...";
     comfort.textContent = "Comfort: --";
     rain.textContent = "Rain: --";
     lightning.textContent = "Lightning: --";
     safety.textContent = "Safety: --";
+    return;
+  }
+
+  const details = getStormWatchingDetails(weather);
+
+  rating.textContent = `${details.stars} ${details.rating}`;
+  comfort.textContent = `Comfort: ${details.comfort}`;
+  rain.textContent = `Rain: ${details.rain}`;
+  lightning.textContent = `Lightning: ${details.lightning}`;
+  safety.textContent = `Safety: ${details.safety}`;
 }
 // ----------------------------
 // Radar Awareness
