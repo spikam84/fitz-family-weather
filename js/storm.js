@@ -190,212 +190,494 @@ async function updateRadarAwareness() {
 
     const centerLat = 41.5245;
     const centerLon = -90.5157;
-
+    const detectionRadiusMiles = 50;
+    const imageRadiusMiles = 60;
+    const imageSize = 256;
+    const radarIntervalMinutes = 15;
     const milesPerLatitudeDegree = 69;
     const milesPerLongitudeDegree =
         69 * Math.cos(centerLat * Math.PI / 180);
+    const latitudeRadius = imageRadiusMiles / milesPerLatitudeDegree;
+    const longitudeRadius = imageRadiusMiles / milesPerLongitudeDegree;
+    const radarService =
+        "https://mapservices.weather.noaa.gov/eventdriven/rest/services/radar/radar_base_reflectivity_time/ImageServer/exportImage";
 
-    const directions = [
-        { name: "N", north: 1, east: 0 },
-        { name: "NE", north: 1, east: 1 },
-        { name: "E", north: 0, east: 1 },
-        { name: "SE", north: -1, east: 1 },
-        { name: "S", north: -1, east: 0 },
-        { name: "SW", north: -1, east: -1 },
-        { name: "W", north: 0, east: -1 },
-        { name: "NW", north: 1, east: -1 }
-    ];
+    function buildRadarImageUrl(radarTime = null) {
+        const params = new URLSearchParams({
+            bbox: [
+                centerLon - longitudeRadius,
+                centerLat - latitudeRadius,
+                centerLon + longitudeRadius,
+                centerLat + latitudeRadius
+            ].join(","),
+            bboxSR: "4326",
+            imageSR: "4326",
+            size: `${imageSize},${imageSize}`,
+            adjustAspectRatio: "false",
+            format: "png32",
+            interpolation: "RSP_NearestNeighbor",
+            f: "image"
+        });
 
-    const scanDistances = [10, 25, 50];
-
-    const scanPoints = [
-        {
-            direction: "HERE",
-            miles: 0,
-            latitude: centerLat,
-            longitude: centerLon
+        if (radarTime !== null) {
+            params.set("time", radarTime.toString());
+        } else {
+            // NOAA exports can be cached for hours. A five-minute URL bucket keeps
+            // the latest frame current while still allowing short-term caching.
+            params.set("_", Math.floor(Date.now() / (5 * 60 * 1000)).toString());
         }
-    ];
 
-    for (const miles of scanDistances) {
-        for (const direction of directions) {
-            const isDiagonal =
-                direction.north !== 0 && direction.east !== 0;
-
-            const componentMiles = isDiagonal
-                ? miles / Math.sqrt(2)
-                : miles;
-
-            scanPoints.push({
-                direction: direction.name,
-                miles,
-                latitude:
-                    centerLat +
-                    (direction.north * componentMiles) /
-                    milesPerLatitudeDegree,
-                longitude:
-                    centerLon +
-                    (direction.east * componentMiles) /
-                    milesPerLongitudeDegree
-            });
-        }
+        return `${radarService}?${params.toString()}`;
     }
 
-    async function sampleRadarPoint(point, radarTime = null) {
-const params = new URLSearchParams({
-    geometry: JSON.stringify({
-        x: point.longitude,
-        y: point.latitude,
-        spatialReference: { wkid: 4326 }
-    }),
-    geometryType: "esriGeometryPoint",
-    returnGeometry: "false",
-    returnCatalogItems: "false",
-    returnAllPixelValues: "true",
-    f: "json"
-});
-if (radarTime) {
-    params.set("time", radarTime.toString());
-}
+    async function drawBlobToPixelData(imageBlob) {
+        const canvas = document.createElement("canvas");
+        canvas.width = imageSize;
+        canvas.height = imageSize;
 
-const radarUrl =
-    "https://mapservices.weather.noaa.gov/eventdriven/rest/services/radar/radar_base_reflectivity_time/ImageServer/identify?" +
-    params.toString();
+        const context = canvas.getContext("2d", {
+            alpha: true,
+            willReadFrequently: true
+        });
 
-const response = await fetch(radarUrl);
+        if (!context) {
+            throw new Error("Unable to create radar image canvas.");
+        }
 
-if (!response.ok) {
-    throw new Error(`Radar request failed: ${response.status}`);
-}
+        if (typeof createImageBitmap === "function") {
+            const radarImage = await createImageBitmap(imageBlob);
+            context.drawImage(radarImage, 0, 0, imageSize, imageSize);
+            radarImage.close();
+        } else {
+            const imageUrl = URL.createObjectURL(imageBlob);
 
-        const data = await response.json();
+            try {
+                const radarImage = await new Promise((resolve, reject) => {
+                    const image = new Image();
+                    image.onload = () => resolve(image);
+                    image.onerror = () => reject(
+                        new Error("Unable to decode radar image.")
+                    );
+                    image.src = imageUrl;
+                });
+                context.drawImage(radarImage, 0, 0, imageSize, imageSize);
+            } finally {
+                URL.revokeObjectURL(imageUrl);
+            }
+        }
 
-       const precipitationDetected =
-    data.value !== "NoData";
+        return context.getImageData(0, 0, imageSize, imageSize).data;
+    }
 
-      return {
-    direction: point.direction,
-    miles: point.miles,
-    precipitation: precipitationDetected
-};
+    async function loadRadarPixels(radarTime = null) {
+        const response = await fetch(buildRadarImageUrl(radarTime), {
+            mode: "cors",
+            credentials: "omit"
+        });
+
+        if (!response.ok) {
+            throw new Error(`Radar image request failed: ${response.status}`);
+        }
+
+        const imageBlob = await response.blob();
+        if (!imageBlob.type.startsWith("image/")) {
+            throw new Error("Radar service did not return an image.");
+        }
+
+        return drawBlobToPixelData(imageBlob);
+    }
+
+    function pixelPosition(index) {
+        const x = index % imageSize;
+        const y = Math.floor(index / imageSize);
+        const eastMiles =
+            ((x + 0.5) / imageSize - 0.5) * imageRadiusMiles * 2;
+        // PNG rows run from north at the top to south at the bottom.
+        const northMiles =
+            (0.5 - (y + 0.5) / imageSize) * imageRadiusMiles * 2;
+
+        return {
+            eastMiles,
+            northMiles,
+            distance: Math.hypot(eastMiles, northMiles)
+        };
+    }
+
+    function createPrecipitationMask(pixelData) {
+        const pixelCount = imageSize * imageSize;
+        const candidates = new Uint8Array(pixelCount);
+        const strongCandidates = new Uint8Array(pixelCount);
+        const mask = new Uint8Array(pixelCount);
+        const strongMask = new Uint8Array(pixelCount);
+
+        for (let index = 0; index < pixelCount; index += 1) {
+            const red = pixelData[index * 4];
+            const green = pixelData[index * 4 + 1];
+            const blue = pixelData[index * 4 + 2];
+            const alpha = pixelData[index * 4 + 3];
+            const insideRadarArea =
+                pixelPosition(index).distance <= imageRadiusMiles;
+
+            // NOAA's PNG is an opaque 95-color reflectivity raster. Alpha marks
+            // raster coverage, not rain. The blue/green portion of its color ramp
+            // includes weak returns and clutter; meaningful echoes begin where the
+            // ramp changes to olive/yellow/red (red >= 34 and blue <= 10).
+            const isEchoColor =
+                alpha > 0 && red >= 34 && blue <= 10;
+            const isStrongEchoColor =
+                isEchoColor && red >= 230 && green <= 177 && blue <= 2;
+
+            if (insideRadarArea && isEchoColor) {
+                candidates[index] = 1;
+                if (isStrongEchoColor) strongCandidates[index] = 1;
+            }
+        }
+
+        // Keep small showers, but remove isolated one- and two-pixel artifacts.
+        for (let y = 0; y < imageSize; y += 1) {
+            for (let x = 0; x < imageSize; x += 1) {
+                const index = y * imageSize + x;
+                if (!candidates[index]) continue;
+
+                let neighbors = 0;
+                for (let offsetY = -1; offsetY <= 1; offsetY += 1) {
+                    const neighborY = y + offsetY;
+                    if (neighborY < 0 || neighborY >= imageSize) continue;
+
+                    for (let offsetX = -1; offsetX <= 1; offsetX += 1) {
+                        const neighborX = x + offsetX;
+                        if (neighborX < 0 || neighborX >= imageSize) continue;
+                        neighbors += candidates[
+                            neighborY * imageSize + neighborX
+                        ];
+                    }
+                }
+
+                if (neighbors >= 3) {
+                    mask[index] = 1;
+                    strongMask[index] = strongCandidates[index];
+                }
+            }
+        }
+
+        return { mask, strongMask };
+    }
+
+    function findPrecipitationRegions(mask, strongMask) {
+        const visited = new Uint8Array(mask.length);
+        const regions = [];
+        const neighborOffsets = [
+            [-1, -1], [0, -1], [1, -1],
+            [-1, 0],           [1, 0],
+            [-1, 1],  [0, 1],  [1, 1]
+        ];
+
+        for (let start = 0; start < mask.length; start += 1) {
+            if (!mask[start] || visited[start]) continue;
+
+            const queue = [start];
+            const pixels = [];
+            visited[start] = 1;
+            let queueIndex = 0;
+            let eastTotal = 0;
+            let northTotal = 0;
+            let nearestDistance = Infinity;
+            let strongPixelCount = 0;
+
+            while (queueIndex < queue.length) {
+                const index = queue[queueIndex++];
+                pixels.push(index);
+                strongPixelCount += strongMask[index];
+
+                const position = pixelPosition(index);
+                eastTotal += position.eastMiles;
+                northTotal += position.northMiles;
+                nearestDistance = Math.min(nearestDistance, position.distance);
+
+                const x = index % imageSize;
+                const y = Math.floor(index / imageSize);
+
+                for (const [offsetX, offsetY] of neighborOffsets) {
+                    const neighborX = x + offsetX;
+                    const neighborY = y + offsetY;
+                    if (
+                        neighborX < 0 || neighborX >= imageSize ||
+                        neighborY < 0 || neighborY >= imageSize
+                    ) {
+                        continue;
+                    }
+
+                    const neighborIndex = neighborY * imageSize + neighborX;
+                    if (!mask[neighborIndex] || visited[neighborIndex]) continue;
+
+                    visited[neighborIndex] = 1;
+                    queue.push(neighborIndex);
+                }
+            }
+
+            const strongPixelFraction = strongPixelCount / pixels.length;
+
+            // A real precipitation area must be spatially coherent and contain a
+            // meaningful stronger core. This rejects small warm-color speckles and
+            // broad low-level clutter without relying on alpha transparency.
+            if (
+                pixels.length >= 20 &&
+                strongPixelCount >= 8 &&
+                strongPixelFraction >= 0.05
+            ) {
+                regions.push({
+                    pixels,
+                    area: pixels.length,
+                    strongPixelCount,
+                    centroidEast: eastTotal / pixels.length,
+                    centroidNorth: northTotal / pixels.length,
+                    nearestDistance
+                });
+            }
+        }
+
+        return regions;
+    }
+
+    function getCompassDirection(eastMiles, northMiles) {
+        const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+        const bearing =
+            (Math.atan2(eastMiles, northMiles) * 180 / Math.PI + 360) % 360;
+        return directions[Math.round(bearing / 45) % directions.length];
+    }
+
+    function analyzeRadarFrame(pixelData) {
+        const { mask, strongMask } = createPrecipitationMask(pixelData);
+        const regions = findPrecipitationRegions(mask, strongMask);
+        const nearbyRegions = regions.filter(
+            region => region.nearestDistance <= detectionRadiusMiles
+        );
+        const directionScores = new Map();
+        let nearestDistance = Infinity;
+
+        for (const region of nearbyRegions) {
+            for (const index of region.pixels) {
+                const position = pixelPosition(index);
+                if (position.distance > detectionRadiusMiles) continue;
+
+                nearestDistance = Math.min(nearestDistance, position.distance);
+                if (position.distance <= 2) continue;
+
+                const direction = getCompassDirection(
+                    position.eastMiles,
+                    position.northMiles
+                );
+                const weight = 1 / (1 + position.distance / 25);
+                directionScores.set(
+                    direction,
+                    (directionScores.get(direction) || 0) + weight
+                );
+            }
+        }
+
+        const sortedDirections = [...directionScores.entries()]
+            .sort((a, b) => b[1] - a[1]);
+        let dominantDirection = sortedDirections[0]?.[0] || "HERE";
+
+        if (sortedDirections.length > 1) {
+            const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+            const [primaryDirection, primaryScore] = sortedDirections[0];
+            const [secondaryDirection, secondaryScore] = sortedDirections[1];
+            const primaryIndex = directions.indexOf(primaryDirection);
+            const secondaryIndex = directions.indexOf(secondaryDirection);
+            const sectorDifference = Math.min(
+                Math.abs(primaryIndex - secondaryIndex),
+                directions.length - Math.abs(primaryIndex - secondaryIndex)
+            );
+
+            if (
+                sectorDifference === 1 &&
+                secondaryScore >= primaryScore * 0.15
+            ) {
+                dominantDirection =
+                    `${primaryDirection}/${secondaryDirection}`;
+            }
+        }
+
+        return {
+            regions,
+            nearbyRegions,
+            nearestDistance,
+            dominantDirection
+        };
+    }
+
+    function findMatchingPastRegion(currentRegion, pastRegions) {
+        let bestMatch = null;
+        let bestScore = Infinity;
+
+        for (const pastRegion of pastRegions) {
+            const centroidShift = Math.hypot(
+                currentRegion.centroidEast - pastRegion.centroidEast,
+                currentRegion.centroidNorth - pastRegion.centroidNorth
+            );
+            const areaRatio = currentRegion.area / pastRegion.area;
+
+            if (centroidShift > 25 || areaRatio < 0.35 || areaRatio > 2.85) {
+                continue;
+            }
+
+            const score = centroidShift + Math.abs(Math.log(areaRatio)) * 5;
+            if (score < bestScore) {
+                bestScore = score;
+                bestMatch = { region: pastRegion, centroidShift, areaRatio };
+            }
+        }
+
+        return bestMatch;
+    }
+
+    function calculateRadarMotion(currentAnalysis, pastAnalysis) {
+        const currentRegion = [...currentAnalysis.nearbyRegions]
+            .sort((a, b) => a.nearestDistance - b.nearestDistance)[0];
+
+        if (!currentRegion || !pastAnalysis) {
+            return {
+                movementText: "No clear movement detected",
+                etaText: "Unable to estimate"
+            };
+        }
+
+        const match = findMatchingPastRegion(currentRegion, pastAnalysis.regions);
+        if (!match) {
+            return {
+                movementText: "New precipitation detected",
+                etaText: "Unable to estimate"
+            };
+        }
+
+        const distanceChange =
+            match.region.nearestDistance - currentRegion.nearestDistance;
+        const movementThresholdMiles = 1.5;
+
+        if (distanceChange < -movementThresholdMiles) {
+            return {
+                movementText: "Moving away",
+                etaText: "Unable to estimate"
+            };
+        }
+
+        if (distanceChange <= movementThresholdMiles) {
+            return {
+                movementText: "No clear movement detected",
+                etaText: "Unable to estimate"
+            };
+        }
+
+        const movementText =
+            `Approaching from ${currentAnalysis.dominantDirection}`;
+        const radialSpeed = distanceChange * (60 / radarIntervalMinutes);
+        const currentCentroidDistance = Math.hypot(
+            currentRegion.centroidEast,
+            currentRegion.centroidNorth
+        );
+        const pastCentroidDistance = Math.hypot(
+            match.region.centroidEast,
+            match.region.centroidNorth
+        );
+        const centroidDistanceChange =
+            pastCentroidDistance - currentCentroidDistance;
+        const highConfidence =
+            currentRegion.area >= 8 &&
+            match.region.area >= 8 &&
+            match.centroidShift >= movementThresholdMiles &&
+            match.centroidShift <= 20 &&
+            match.areaRatio >= 0.6 &&
+            match.areaRatio <= 1.67 &&
+            centroidDistanceChange > 0.75 &&
+            Math.abs(distanceChange - centroidDistanceChange) <= 5 &&
+            radialSpeed >= 5 &&
+            radialSpeed <= 80 &&
+            currentRegion.nearestDistance >= 3;
+
+        if (!highConfidence) {
+            return { movementText, etaText: "Unable to estimate" };
+        }
+
+        const etaMinutes =
+            (currentRegion.nearestDistance / radialSpeed) * 60;
+        if (etaMinutes <= 0 || etaMinutes > 120) {
+            return { movementText, etaText: "Unable to estimate" };
+        }
+
+        const roundedEta = Math.ceil(etaMinutes / 15) * 15;
+        let etaText;
+
+        if (roundedEta >= 75) {
+            etaText = "More than 1 hour";
+        } else if (roundedEta === 60) {
+            etaText = "About 1 hour";
+        } else {
+            etaText = `About ${roundedEta} minutes`;
+        }
+
+        return { movementText, etaText };
     }
 
     try {
         const pastRadarTime =
-    Date.now() - (15 * 60 * 1000);
+            Date.now() - (radarIntervalMinutes * 60 * 1000);
+        const [currentResult, pastResult] = await Promise.allSettled([
+            loadRadarPixels(),
+            loadRadarPixels(pastRadarTime)
+        ]);
 
-const [results, pastResults] = await Promise.all([
-    Promise.all(
-        scanPoints.map(point =>
-            sampleRadarPoint(point)
-        )
-    ),
-    Promise.all(
-        scanPoints.map(point =>
-            sampleRadarPoint(point, pastRadarTime)
-        )
-    )
-]);
-
-
-const precipitationPoints = results
-    .filter(result => result.precipitation)
-    .sort((a, b) => a.miles - b.miles);
-
-    const pastPrecipitationPoints = pastResults
-    .filter(result => result.precipitation)
-    .sort((a, b) => a.miles - b.miles);
-
-        if (precipitationPoints.length === 0) {
-    status.textContent = "No precipitation detected";
-    distance.textContent = "None within 50 miles";
-    movement.textContent = "No movement to track";
-    eta.textContent = "--";
-    addStormTimelineItem(
-    "RADAR",
-    "No precipitation detected within 50 miles."
-);
-    return;
+        if (currentResult.status !== "fulfilled") {
+            throw currentResult.reason;
         }
 
-        const nearest = precipitationPoints[0];
-const pastNearest = pastPrecipitationPoints[0];
+        const currentAnalysis = analyzeRadarFrame(currentResult.value);
+        const pastAnalysis = pastResult.status === "fulfilled"
+            ? analyzeRadarFrame(pastResult.value)
+            : null;
 
-let movementText = "No clear movement detected";
-let etaText = "Unable to estimate";
-if (nearest.miles === 0) {
-    movementText = "Over the area now";
-    etaText = "Already here";
-}
+        if (currentAnalysis.nearbyRegions.length === 0) {
+            status.textContent = "No precipitation detected";
+            distance.textContent = "None within 50 miles";
+            movement.textContent = "No movement to track";
+            eta.textContent = "--";
+            addStormTimelineItem(
+                "RADAR",
+                "No precipitation detected within 50 miles."
+            );
+            return;
+        }
 
-if (!pastNearest && nearest.miles !== 0) {
-    movementText = "New precipitation detected";
-}
-if (pastNearest && nearest.miles !== 0) {
-    if (
-        nearest.direction === pastNearest.direction &&
-        nearest.miles < pastNearest.miles
-    ) {
-        movementText = `Approaching from ${nearest.direction}`;
-        const milesMoved = pastNearest.miles - nearest.miles;
-        const estimatedSpeed = milesMoved * 4;
-        if (estimatedSpeed > 0) {
-    const etaMinutes =
-        (nearest.miles / estimatedSpeed) * 60;
+        const nearestMiles = currentAnalysis.nearestDistance;
+        const displayMiles = Math.max(5, Math.round(nearestMiles / 5) * 5);
+        const direction = currentAnalysis.dominantDirection;
+        const motion = calculateRadarMotion(currentAnalysis, pastAnalysis);
 
-    const roundedEta =
-    Math.ceil(etaMinutes / 15) * 15;
-
-if (roundedEta >= 75) {
-    etaText = "More than 1 hour";
-} else if (roundedEta === 60) {
-    etaText = "About 1 hour";
-} else {
-    etaText = `About ${roundedEta} minutes`;
-}
-}
-    } else if (
-        nearest.direction === pastNearest.direction &&
-        nearest.miles > pastNearest.miles
-    ) {
-        movementText = "Moving away";
-    } else if (
-        nearest.direction !== pastNearest.direction
-    ) {
-        movementText = "Shifting across the area";
-    }
-}
         status.textContent = "Nearby precipitation detected";
 
-if (nearest.miles === 0) {
-    distance.textContent = "Over the Quad Cities";
-} else {
-    distance.textContent =
-        `About ${nearest.miles} mi ${nearest.direction}`;
-}
-if (nearest.miles === 0) {
-    addStormTimelineItem(
-        "RADAR",
-        "Precipitation detected over the Quad Cities."
-    );
-} else {
-    addStormTimelineItem(
-        "RADAR",
-        `Precipitation detected about ${nearest.miles} mi ${nearest.direction}.`
-    );
-}
-movement.textContent = movementText;
-eta.textContent = etaText;
-        
-
+        if (nearestMiles <= 2) {
+            distance.textContent = "Over the Quad Cities";
+            movement.textContent = "Over the area now";
+            eta.textContent = "Already here";
+            addStormTimelineItem(
+                "RADAR",
+                "Precipitation detected over the Quad Cities."
+            );
+        } else {
+            distance.textContent = `About ${displayMiles} mi ${direction}`;
+            movement.textContent = motion.movementText;
+            eta.textContent = motion.etaText;
+            addStormTimelineItem(
+                "RADAR",
+                `Precipitation detected about ${displayMiles} mi ${direction}.`
+            );
+        }
     } catch (error) {
-        console.error("Unable to scan MRMS radar:", error);
-
-        status.textContent = "No precipitation detected";
-distance.textContent = "Clear within 50 miles";
-movement.textContent = "No movement to track";
-eta.textContent = "--";
-return;
+        console.error("Unable to analyze MRMS radar image:", error);
+        status.textContent = "Radar unavailable";
+        distance.textContent = "--";
+        movement.textContent = "Not calculated yet";
+        eta.textContent = "--";
     }
 }
 
