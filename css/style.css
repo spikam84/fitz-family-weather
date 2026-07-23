@@ -975,3 +975,9 @@ main,
 .timeline-weather {
     border-left-color: #ffd000;
 }
+.dog-walk-time {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.85rem;
+    line-height: 1.3;
+}

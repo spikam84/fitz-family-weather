@@ -67,6 +67,7 @@ updateOutdoorScore({
   code: current.weather_code
 });
 updateDadStormWatching(data);
+updateDadDogWalking(data);
 updateFireworksForecast(data);
 updateStormHighlight(data);
 updateFireworksHighlight();
@@ -312,10 +313,17 @@ function updateDadStormWatching(data) {
   const current = data.current;
   const hourly = data.hourly;
 
-  const stars = document.getElementById("dad-storm-stars");
-  const rating = document.getElementById("dad-storm-rating");
+  const cards = [
+  {
+    stars: document.getElementById("dad-storm-stars"),
+    rating: document.getElementById("dad-storm-rating")
+  },
+  {
+    stars: document.getElementById("micah-storm-stars"),
+    rating: document.getElementById("micah-storm-rating")
+  }
+];
 
-  if (!stars || !rating) return;
 
   const now = new Date();
 
@@ -336,8 +344,12 @@ function updateDadStormWatching(data) {
     wind: current.wind_speed_10m
   });
 
-  stars.textContent = details.stars;
-  rating.textContent = details.rating;
+  cards.forEach(card => {
+  if (!card.stars || !card.rating) return;
+
+  card.stars.textContent = details.stars;
+  card.rating.textContent = details.rating;
+});
 }
 const refreshButton = document.querySelector(".refresh-button");
 
@@ -348,3 +360,191 @@ refreshButton.addEventListener("click", async () => {
 
   refreshButton.classList.remove("spinning");
 });
+// ----------------------------
+// Dad Dog Walking
+// Two walks per day: morning and evening
+// ----------------------------
+function updateDadDogWalking(data) {
+  const hourly = data.hourly;
+
+  const stars = document.getElementById("dad-dog-walking-stars");
+  const rating = document.getElementById("dad-dog-walking-rating");
+  const morningText = document.getElementById("dad-dog-walking-morning");
+  const eveningText = document.getElementById("dad-dog-walking-evening");
+
+  if (!stars || !rating || !morningText || !eveningText) return;
+
+  const now = new Date();
+  const todaySunrise = new Date(data.daily.sunrise[0]);
+  const todaySunset = new Date(data.daily.sunset[0]);
+  const todayNoon = new Date(todaySunrise);
+  todayNoon.setHours(12, 0, 0, 0);
+
+  const todayEveningStart = new Date(todaySunrise);
+  todayEveningStart.setHours(16, 0, 0, 0);
+
+  const todayEveningCutoff = new Date(
+    todaySunset.getTime() - 30 * 60 * 1000
+  );
+
+  function buildWeather(index) {
+    return {
+      temp: hourly.temperature_2m[index],
+      feelsLike: hourly.apparent_temperature[index],
+      humidity: hourly.relative_humidity_2m[index],
+      wind: hourly.wind_speed_10m[index],
+      rainChance: hourly.precipitation_probability[index],
+      code: hourly.weather_code[index]
+    };
+  }
+
+  function findBestWalk(startTime, endTime) {
+    const candidates = hourly.time
+      .map((time, index) => ({
+        time: new Date(time),
+        index
+      }))
+      .filter(item =>
+        item.time >= startTime &&
+        item.time <= endTime
+      );
+
+    if (candidates.length === 0) return null;
+
+    let best = null;
+
+    candidates.forEach(candidate => {
+      const details = getDogWalkingDetails(
+        buildWeather(candidate.index)
+      );
+
+      if (!best || details.score > best.score) {
+        best = {
+          ...details,
+          time: candidate.time,
+          weather: buildWeather(candidate.index)
+        };
+      }
+    });
+
+    return best;
+  }
+
+  function formatWalkMessage(label, walk) {
+    if (!walk) {
+      return `${label}: No forecast available`;
+    }
+
+    const stormCodes = [95, 96, 99];
+    const rainChance = walk.weather.rainChance ?? 0;
+    const feelsLike = walk.weather.feelsLike ?? 70;
+    const wind = walk.weather.wind ?? 0;
+
+    if (
+      stormCodes.includes(walk.weather.code) ||
+      rainChance >= 70
+    ) {
+      return `${label}: Skip—storms expected`;
+    }
+
+    if (feelsLike >= 95) {
+      return `${label}: Skip—too hot for Dad and the corgi`;
+    }
+
+    if (feelsLike <= 15) {
+      return `${label}: Skip—too cold`;
+    }
+
+    if (wind >= 30) {
+      return `${label}: Skip—too windy`;
+    }
+
+    if (walk.score < 30) {
+      return `${label}: Skip—poor conditions`;
+    }
+
+    const formattedTime = walk.time.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit"
+    });
+
+    return `${label}: Best around ${formattedTime}`;
+  }
+
+  let morning = findBestWalk(
+    new Date(Math.max(now.getTime(), todaySunrise.getTime())),
+    todayNoon
+  );
+
+  let evening = findBestWalk(
+    new Date(Math.max(now.getTime(), todayEveningStart.getTime())),
+    todayEveningCutoff
+  );
+
+  // If today's morning window is over, use tomorrow morning.
+  if (!morning && data.daily.sunrise?.[1]) {
+    const tomorrowSunrise = new Date(data.daily.sunrise[1]);
+    const tomorrowNoon = new Date(tomorrowSunrise);
+    tomorrowNoon.setHours(12, 0, 0, 0);
+
+    morning = findBestWalk(tomorrowSunrise, tomorrowNoon);
+
+    morningText.textContent = formatWalkMessage(
+      "🌅 Tomorrow morning",
+      morning
+    );
+  } else {
+    morningText.textContent = formatWalkMessage(
+      "🌅 Morning",
+      morning
+    );
+  }
+
+  // If today's evening window is over, use tomorrow evening.
+  if (
+    !evening &&
+    data.daily.sunrise?.[1] &&
+    data.daily.sunset?.[1]
+  ) {
+    const tomorrowBase = new Date(data.daily.sunrise[1]);
+    const tomorrowEveningStart = new Date(tomorrowBase);
+    tomorrowEveningStart.setHours(16, 0, 0, 0);
+
+    const tomorrowEveningCutoff = new Date(
+      new Date(data.daily.sunset[1]).getTime() - 30 * 60 * 1000
+    );
+
+    evening = findBestWalk(
+      tomorrowEveningStart,
+      tomorrowEveningCutoff
+    );
+
+    eveningText.textContent = formatWalkMessage(
+      "🌆 Tomorrow evening",
+      evening
+    );
+  } else {
+    eveningText.textContent = formatWalkMessage(
+      "🌆 Evening",
+      evening
+    );
+  }
+
+  const availableWalks = [morning, evening].filter(Boolean);
+
+  if (availableWalks.length === 0) {
+    stars.textContent = "☆☆☆☆☆";
+    rating.textContent = "Unavailable";
+    return;
+  }
+
+  const overallScore = Math.round(
+    availableWalks.reduce((total, walk) => total + walk.score, 0) /
+    availableWalks.length
+  );
+
+  const overallRating = getRating(overallScore);
+
+  stars.textContent = overallRating.stars;
+  rating.textContent = overallRating.word;
+}

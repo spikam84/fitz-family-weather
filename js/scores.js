@@ -179,3 +179,69 @@ function getStormWatchingDetails(weather) {
     safety: "No special precautions"
   };
 }
+// ----------------------------
+// Dog Walking Score
+// Designed for Dad and the corgi
+// ----------------------------
+function calculateDogWalkingScore(weather) {
+  let score = 100;
+
+  const feelsLike = weather.feelsLike ?? weather.temp ?? 70;
+  const humidity = weather.humidity ?? 50;
+  const wind = weather.wind ?? 0;
+  const rainChance = weather.rainChance ?? 0;
+  const code = weather.code;
+
+  const thunderstormCodes = [95, 96, 99];
+  const rainCodes = [51, 53, 55, 61, 63, 65, 80, 81, 82];
+  const snowCodes = [71, 73, 75];
+
+  // Lightning or storms: not safe for walking
+  if (thunderstormCodes.includes(code)) {
+    return 0;
+  }
+
+  // Heat and pavement concerns
+  if (feelsLike >= 100) score -= 70;
+  else if (feelsLike >= 95) score -= 55;
+  else if (feelsLike >= 90) score -= 35;
+  else if (feelsLike >= 85) score -= 20;
+  else if (feelsLike >= 80) score -= 8;
+
+  // Cold comfort
+  if (feelsLike <= 10) score -= 65;
+  else if (feelsLike <= 20) score -= 45;
+  else if (feelsLike <= 32) score -= 25;
+  else if (feelsLike <= 42) score -= 10;
+
+  // Humidity makes heat harder on both walker and dog
+  if (humidity >= 85) score -= 15;
+  else if (humidity >= 75) score -= 10;
+  else if (humidity >= 65) score -= 5;
+
+  // Wind comfort
+  if (wind >= 30) score -= 40;
+  else if (wind >= 22) score -= 25;
+  else if (wind >= 15) score -= 10;
+
+  // Rain and snow
+  if (rainCodes.includes(code)) score -= 25;
+  if (snowCodes.includes(code)) score -= 30;
+
+  if (rainChance >= 70) score -= 30;
+  else if (rainChance >= 50) score -= 20;
+  else if (rainChance >= 30) score -= 10;
+
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function getDogWalkingDetails(weather) {
+  const score = calculateDogWalkingScore(weather);
+  const rating = getRating(score);
+
+  return {
+    score,
+    stars: rating.stars,
+    rating: rating.word
+  };
+}
