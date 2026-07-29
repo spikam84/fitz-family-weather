@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fitz Weather Alerts</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="top-bar">
+      <div class="brand">
+        <span class="menu-icon">☰</span>
+        <img src="images/logo.png" alt="Fitz Weather HQ" class="logo">
+        <div class="brand-text">
+          <h1>FITZ WEATHER ALERTS</h1>
+          <p>Quad Cities Watches, Warnings & Advisories</p>
+        </div>
+      </div>
+      <button class="refresh-button alerts-refresh" aria-label="Refresh weather alerts">↻</button>
+    </header>
+
+    <main>
+      <section class="alerts-hero large-card">
+        <div class="alerts-hero-icon">🔔</div>
+        <div>
+          <p class="alerts-label">Local Alert Status</p>
+          <div class="alerts-status" id="alerts-status">CHECKING</div>
+          <h2 id="alerts-summary">Contacting the National Weather Service...</h2>
+          <p id="alerts-updated"></p>
+        </div>
+      </section>
+
+      <section class="alerts-region large-card">
+        <strong>Local coverage</strong>
+        <p>Iowa: Scott, Muscatine, Clinton, and Louisa counties</p>
+        <p>Illinois: Rock Island, Henry, and Mercer counties</p>
+      </section>
+
+      <section class="alerts-list" id="alerts-list" aria-live="polite"></section>
+
+      <p class="alerts-note">For life-threatening weather, follow official National Weather Service instructions and local emergency guidance.</p>
+    </main>
+
+    <nav class="bottom-nav">
+      <a href="index.html">🏠<span>Home</span></a>
+      <a href="storm.html">⛈️<span>Storm Center</span></a>
+      <a href="garden.html">🌿<span>Garden Center</span></a>
+      <a class="active" href="alerts.html"><span class="nav-icon">🔔<span class="alert-badge" aria-hidden="true"></span></span><span>Alerts</span></a>
+      <a href="#">⚙️<span>Settings</span></a>
+    </nav>
+  </div>
+  <script src="js/alerts.js"></script>
+</body>
+</html>
