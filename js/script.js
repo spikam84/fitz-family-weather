@@ -68,6 +68,7 @@ updateOutdoorScore({
 });
 updateDadStormWatching(data);
 updateDadDogWalking(data);
+updateNathanGardening(data);
 updateFireworksForecast(data);
 updateStormHighlight(data);
 updateFireworksHighlight();
@@ -547,4 +548,38 @@ function updateDadDogWalking(data) {
 
   stars.textContent = overallRating.stars;
   rating.textContent = overallRating.word;
+}
+// ----------------------------
+// Nathan Gardening
+// Uses the same Garden Conditions score as the Garden Center
+// ----------------------------
+function updateNathanGardening(data) {
+  const stars = document.getElementById("nathan-garden-stars");
+  const rating = document.getElementById("nathan-garden-rating");
+
+  if (!stars || !rating || !data?.current || !data?.hourly) return;
+
+  const now = new Date();
+  const next24Hours = data.hourly.time
+    .map((time, index) => ({ time: new Date(time), index }))
+    .filter(item =>
+      item.time >= now &&
+      item.time < new Date(now.getTime() + 24 * 60 * 60 * 1000)
+    );
+
+  const rainChance = next24Hours.length
+    ? Math.max(...next24Hours.map(item =>
+        data.hourly.precipitation_probability[item.index] ?? 0
+      ))
+    : 0;
+
+  const details = getGardenDetails({
+    feelsLike: data.current.apparent_temperature,
+    wind: data.current.wind_speed_10m,
+    rainChance,
+    code: data.current.weather_code
+  });
+
+  stars.textContent = details.stars;
+  rating.textContent = details.rating;
 }
