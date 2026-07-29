@@ -64,6 +64,7 @@ updateGeneralOutdoors(data);
 updateDadStormWatching(data);
 updateDadDogWalking(data);
 updateNathanGardening(data);
+updateNathanGrilling(data);
 updateKelsey6AMWalk(data);
 updateFireworksForecast(data);
 updateStormHighlight(data);
@@ -663,6 +664,23 @@ function updateNathanGardening(data) {
     rainChance,
     code: data.current.weather_code
   });
+
+  stars.textContent = details.stars;
+  rating.textContent = details.rating;
+}
+
+// ----------------------------
+// Nathan Grilling
+// Scores the next 6 hours for a practical grilling window
+// ----------------------------
+function updateNathanGrilling(data) {
+  const stars = document.getElementById("nathan-grilling-stars");
+  const rating = document.getElementById("nathan-grilling-rating");
+
+  if (!stars || !rating || !data?.current || !data?.hourly?.time) return;
+
+  const weather = getGeneralOutdoorsWeather(data);
+  const details = getGrillingDetails(weather);
 
   stars.textContent = details.stars;
   rating.textContent = details.rating;
