@@ -69,6 +69,7 @@ updateOutdoorScore({
 updateDadStormWatching(data);
 updateDadDogWalking(data);
 updateNathanGardening(data);
+updateKelsey6AMWalk(data);
 updateFireworksForecast(data);
 updateStormHighlight(data);
 updateFireworksHighlight();
@@ -583,3 +584,42 @@ function updateNathanGardening(data) {
   stars.textContent = details.stars;
   rating.textContent = details.rating;
 }
+
+// ----------------------------
+// Kelsey 6 AM Walk
+// Uses the next upcoming 6:00 AM hourly forecast
+// ----------------------------
+function updateKelsey6AMWalk(data) {
+  const stars = document.getElementById("kelsey-6am-walk-stars");
+  const rating = document.getElementById("kelsey-6am-walk-rating");
+
+  if (!stars || !rating || !data?.hourly?.time) return;
+
+  const now = new Date();
+  const next6AM = data.hourly.time
+    .map((time, index) => ({ time: new Date(time), index }))
+    .find(item =>
+      item.time >= now &&
+      item.time.getHours() === 6
+    );
+
+  if (!next6AM) {
+    stars.textContent = "☆☆☆☆☆";
+    rating.textContent = "Unavailable";
+    return;
+  }
+
+  const i = next6AM.index;
+  const details = get6AMWalkDetails({
+    temp: data.hourly.temperature_2m[i],
+    feelsLike: data.hourly.apparent_temperature[i],
+    humidity: data.hourly.relative_humidity_2m[i],
+    wind: data.hourly.wind_speed_10m[i],
+    rainChance: data.hourly.precipitation_probability[i],
+    code: data.hourly.weather_code[i]
+  });
+
+  stars.textContent = details.stars;
+  rating.textContent = details.rating;
+}
+
