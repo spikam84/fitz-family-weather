@@ -79,8 +79,8 @@ async function updateGarden() {
     const ground = rainPast >= .5 || soilValue >= .36 ? "Muddy" : rainPast >= .15 || soilValue >= .27 ? "Damp" : rainPast < .03 && soilValue < .16 ? "Dry" : "Workable";
     const soil = soilValue >= .36 ? "Wet" : soilValue >= .25 ? "Moist" : soilValue >= .16 ? "Moderate" : "Dry";
 
-    let score = 100 - (storm ? 55 : rainChance >= 55 ? 25 : 0) - (feels >= 100 ? 45 : feels >= 92 ? 28 : feels >= 85 ? 12 : 0) - (wind >= 25 ? 30 : wind >= 18 ? 15 : 0);
-    const rating = getRating(Math.max(0,Math.round(score)));
+    const gardenDetails = getGardenDetails({ feelsLike: feels, wind, rainChance, code });
+    const rating = { stars: gardenDetails.stars, word: gardenDetails.rating };
     let water = rainNext >= .2 || rainChance >= 65 || rainPast >= .25 ? "HOLD OFF" : soilValue < .15 || feels >= 90 ? "WATER" : soilValue < .22 ? "SPOT WATER" : "CHECK SOIL";
     let mow = storm || rainChance >= 75 ? "WAIT" : ground === "Muddy" || rainPast >= .25 ? "TOO WET" : feels >= 95 ? "WAIT FOR EVENING" : "GOOD";
     let plant = storm || ground === "Muddy" || wind >= 25 ? "WAIT" : feels >= 92 || rainChance >= 60 || ground === "Dry" ? "FAIR" : "GOOD";
