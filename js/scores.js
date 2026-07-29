@@ -431,3 +431,77 @@ function getGrillingDetails(weather) {
     rating: rating.word
   };
 }
+
+// ----------------------------
+// Boating Score
+// Shared by Dad and Mom for the same boat.
+// Looks ahead 6 hours and prioritizes water safety.
+// ----------------------------
+function calculateBoatingScore(weather) {
+  let score = 100;
+
+  const wind = weather.wind ?? 0;
+  const gusts = weather.gusts ?? wind;
+  const visibility = weather.visibility ?? 16093;
+  const feelsLike = weather.feelsLike ?? 70;
+  const rainChance = weather.rainChance ?? 0;
+  const forecastCodes = weather.forecastCodes ?? [weather.code];
+
+  const stormCodes = [95, 96, 99];
+  const rainCodes = [51, 53, 55, 61, 63, 65, 80, 81, 82];
+  const snowCodes = [71, 73, 75];
+  const fogCodes = [45, 48];
+
+  // Lightning is an automatic stay-ashore condition.
+  if (forecastCodes.some(code => stormCodes.includes(code))) return 0;
+
+  // Sustained wind and gusts have the greatest effect on boat handling.
+  if (wind >= 25) score -= 70;
+  else if (wind >= 20) score -= 50;
+  else if (wind >= 15) score -= 30;
+  else if (wind >= 10) score -= 12;
+
+  if (gusts >= 35) score -= 65;
+  else if (gusts >= 30) score -= 45;
+  else if (gusts >= 25) score -= 28;
+  else if (gusts >= 20) score -= 12;
+
+  // Visibility is stored in meters: 1 mile is about 1609 meters.
+  if (visibility < 805) score -= 65;
+  else if (visibility < 1609) score -= 45;
+  else if (visibility < 4828) score -= 22;
+
+  if (forecastCodes.some(code => fogCodes.includes(code))) score -= 20;
+
+  // Precipitation can reduce visibility and make conditions change quickly.
+  if (forecastCodes.some(code => rainCodes.includes(code))) score -= 30;
+  else if (rainChance >= 70) score -= 35;
+  else if (rainChance >= 50) score -= 25;
+  else if (rainChance >= 30) score -= 12;
+
+  if (forecastCodes.some(code => snowCodes.includes(code))) score -= 45;
+
+  // Temperature affects exposure risk and comfort.
+  if (feelsLike >= 105) score -= 30;
+  else if (feelsLike >= 95) score -= 18;
+  else if (feelsLike <= 25) score -= 35;
+  else if (feelsLike <= 40) score -= 20;
+  else if (feelsLike <= 50) score -= 8;
+
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function getBoatingDetails(weather) {
+  const score = calculateBoatingScore(weather);
+  const rating = getRating(score);
+
+  let status = "Good to Go";
+  if (score < 50) status = "Stay Ashore";
+  else if (score < 80) status = "Use Caution";
+
+  return {
+    score,
+    stars: rating.stars,
+    rating: status
+  };
+}
