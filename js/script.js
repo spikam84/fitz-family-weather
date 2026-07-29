@@ -59,13 +59,8 @@ document.querySelector(".brand p").textContent =
   weatherSource === "cache"
     ? `Bettendorf, IA · Cached weather · ${displayTime}`
     : `Bettendorf, IA · Updated ${displayTime}`;
-updateOutdoorScore({
-  temp: current.temperature_2m,
-  feelsLike: current.apparent_temperature,
-  humidity: current.relative_humidity_2m,
-  wind: current.wind_speed_10m,
-  code: current.weather_code
-});
+updateOutdoorScore(data);
+updateGeneralOutdoors(data);
 updateDadStormWatching(data);
 updateDadDogWalking(data);
 updateNathanGardening(data);
@@ -124,9 +119,76 @@ function formatTime(timeString) {
 // ----------------------------
 // Outdoor Score
 // ----------------------------
-function updateOutdoorScore(weather) {
-  const score = calculateOutdoorScore(weather);
+function getGeneralOutdoorsWeather(data) {
+  const now = new Date();
+  const cutoff = new Date(now.getTime() + 6 * 60 * 60 * 1000);
+  const hourly = data.hourly;
 
+  const upcoming = hourly.time
+    .map((time, index) => ({ time: new Date(time), index }))
+    .filter(item => item.time >= now && item.time <= cutoff);
+
+  if (upcoming.length === 0) {
+    return {
+      temp: data.current.temperature_2m,
+      feelsLike: data.current.apparent_temperature,
+      humidity: data.current.relative_humidity_2m,
+      wind: data.current.wind_speed_10m,
+      rainChance: 0,
+      code: data.current.weather_code,
+      forecastCodes: [data.current.weather_code]
+    };
+  }
+
+  const feelsLikeValues = upcoming.map(item =>
+    hourly.apparent_temperature[item.index] ?? data.current.apparent_temperature
+  );
+  const lowestFeelsLike = Math.min(...feelsLikeValues);
+  const highestFeelsLike = Math.max(...feelsLikeValues);
+  const worstFeelsLike =
+    calculateOutdoorScore({
+      feelsLike: lowestFeelsLike,
+      humidity: 0,
+      wind: 0,
+      rainChance: 0,
+      code: 0,
+      forecastCodes: [0]
+    }) <
+    calculateOutdoorScore({
+      feelsLike: highestFeelsLike,
+      humidity: 0,
+      wind: 0,
+      rainChance: 0,
+      code: 0,
+      forecastCodes: [0]
+    })
+      ? lowestFeelsLike
+      : highestFeelsLike;
+
+  return {
+    temp: data.current.temperature_2m,
+    feelsLike: worstFeelsLike,
+    humidity: data.current.relative_humidity_2m,
+    wind: Math.max(
+      data.current.wind_speed_10m,
+      ...upcoming.map(item => hourly.wind_speed_10m[item.index] ?? 0)
+    ),
+    rainChance: Math.max(
+      ...upcoming.map(item =>
+        hourly.precipitation_probability[item.index] ?? 0
+      )
+    ),
+    code: data.current.weather_code,
+    forecastCodes: [
+      data.current.weather_code,
+      ...upcoming.map(item => hourly.weather_code[item.index])
+    ]
+  };
+}
+
+function updateOutdoorScore(data) {
+  const weather = getGeneralOutdoorsWeather(data);
+  const score = calculateOutdoorScore(weather);
   const rating = getRating(score);
 
   document.querySelector(".big-stars").textContent = rating.stars;
@@ -135,6 +197,27 @@ function updateOutdoorScore(weather) {
   document.querySelector(".score-reasons").innerHTML = `
     ${getOutdoorReasons(weather).map(reason => `<p>${reason}</p>`).join("")}
   `;
+}
+
+function updateGeneralOutdoors(data) {
+  const weather = getGeneralOutdoorsWeather(data);
+  const rating = getRating(calculateOutdoorScore(weather));
+
+  const cards = [
+    ["mom-general-outdoors-stars", "mom-general-outdoors-rating"],
+    ["nathan-general-outdoors-stars", "nathan-general-outdoors-rating"],
+    ["micah-general-outdoors-stars", "micah-general-outdoors-rating"]
+  ];
+
+  cards.forEach(([starsId, ratingId]) => {
+    const stars = document.getElementById(starsId);
+    const ratingText = document.getElementById(ratingId);
+
+    if (!stars || !ratingText) return;
+
+    stars.textContent = rating.stars;
+    ratingText.textContent = rating.word;
+  });
 }
 
 // ----------------------------
