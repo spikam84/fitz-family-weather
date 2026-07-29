@@ -377,3 +377,57 @@ function get6AMWalkDetails(weather) {
   };
 }
 
+// ----------------------------
+// Grilling Score
+// Looks ahead 6 hours for a practical grilling window.
+// ----------------------------
+function calculateGrillingScore(weather) {
+  let score = 100;
+
+  const feelsLike = weather.feelsLike ?? 70;
+  const wind = weather.wind ?? 0;
+  const rainChance = weather.rainChance ?? 0;
+  const forecastCodes = weather.forecastCodes ?? [weather.code];
+
+  const stormCodes = [95, 96, 99];
+  const rainCodes = [51, 53, 55, 61, 63, 65, 80, 81, 82];
+  const snowCodes = [71, 73, 75];
+
+  // Lightning makes outdoor grilling unsafe.
+  if (forecastCodes.some(code => stormCodes.includes(code))) return 0;
+
+  // Precipitation can interrupt cooking and make the grill unsafe to use.
+  if (forecastCodes.some(code => rainCodes.includes(code))) score -= 35;
+  else if (rainChance >= 70) score -= 40;
+  else if (rainChance >= 50) score -= 28;
+  else if (rainChance >= 30) score -= 12;
+
+  if (forecastCodes.some(code => snowCodes.includes(code))) score -= 40;
+
+  // Strong wind affects flame control and can spread sparks.
+  if (wind >= 30) score -= 55;
+  else if (wind >= 25) score -= 40;
+  else if (wind >= 18) score -= 22;
+  else if (wind >= 12) score -= 8;
+
+  // Temperature mainly affects the cook's comfort.
+  if (feelsLike >= 105) score -= 35;
+  else if (feelsLike >= 95) score -= 22;
+  else if (feelsLike >= 88) score -= 10;
+  else if (feelsLike <= 15) score -= 35;
+  else if (feelsLike <= 32) score -= 20;
+  else if (feelsLike <= 45) score -= 8;
+
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function getGrillingDetails(weather) {
+  const score = calculateGrillingScore(weather);
+  const rating = getRating(score);
+
+  return {
+    score,
+    stars: rating.stars,
+    rating: rating.word
+  };
+}
