@@ -505,3 +505,30 @@ function getBoatingDetails(weather) {
     rating: status
   };
 }
+
+// ----------------------------
+// UV Index
+// More stars mean safer conditions for unprotected sun exposure.
+// ----------------------------
+function getUVIndexDetails(uvIndex) {
+  const uv = Math.max(0, Number(uvIndex) || 0);
+
+  if (uv >= 11) {
+    return { uv, stars: "☆☆☆☆☆", rating: "Extreme" };
+  }
+
+  if (uv >= 8) {
+    return { uv, stars: "★☆☆☆☆", rating: "Very High" };
+  }
+
+  if (uv >= 6) {
+    return { uv, stars: "★★☆☆☆", rating: "High" };
+  }
+
+  if (uv >= 3) {
+    return { uv, stars: "★★★☆☆", rating: "Moderate" };
+  }
+
+  return { uv, stars: "★★★★★", rating: "Low" };
+}
+
