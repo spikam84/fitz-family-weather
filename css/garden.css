@@ -1,0 +1,55 @@
+.garden-page { --garden: #49df82; --garden-dark: #123a2b; }
+.garden-page main { display: grid; gap: 18px; }
+.garden-label { margin: 0 0 8px; color: var(--garden); font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.garden-hero { display: grid; grid-template-columns: auto 1fr; gap: 24px; padding: 30px; border-color: rgba(73,223,130,.45); }
+.garden-leaf { font-size: 76px; }
+.garden-rating { color: var(--garden); font-size: clamp(42px,7vw,82px); font-weight: 900; line-height: .95; }
+.garden-stars { color: var(--gold); font-size: 30px; margin: 8px 0; letter-spacing: .08em; }
+.garden-hero h2 { margin: 8px 0; }
+.garden-hero p:last-child { color: var(--muted); }
+.garden-current { grid-column: 1/-1; display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,.12); }
+.garden-current div { display: grid; gap: 4px; }
+.garden-current strong { font-size: 22px; }
+.garden-current small { color: var(--muted); }
+.garden-heading { display: flex; justify-content: space-between; align-items: end; gap: 16px; }
+.garden-heading h2 { margin: 0; }
+.garden-heading > span { color: var(--muted); }
+.garden-actions { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-top: 14px; }
+.garden-actions article { padding: 22px; border: 1px solid var(--line); border-top: 4px solid var(--garden); border-radius: 20px; background: linear-gradient(145deg,rgba(17,47,78,.96),rgba(7,22,39,.96)); box-shadow: 0 14px 32px rgba(0,0,0,.28); }
+.garden-actions article > span { font-size: 38px; }
+.garden-actions h3 { margin: 10px 0; }
+.garden-actions strong { display: block; color: var(--garden); font-size: 25px; }
+.garden-actions p { color: var(--muted); line-height: 1.4; }
+.garden-actions .watch { color: var(--gold); }
+.garden-actions .poor { color: var(--red); }
+.garden-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.garden-panel { padding: 24px; }
+.garden-panel header { display: flex; gap: 14px; align-items: center; margin-bottom: 18px; }
+.garden-panel header > span { font-size: 40px; }
+.garden-panel h2,.garden-panel p { margin: 0; }
+.garden-panel header p { color: var(--muted); margin-top: 4px; }
+.garden-list { display: grid; }
+.garden-list div { display: flex; justify-content: space-between; gap: 18px; padding: 14px 0; border-top: 1px solid rgba(255,255,255,.1); }
+.garden-list strong { color: var(--garden); text-align: right; }
+.garden-metrics { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+.garden-metrics div { display: grid; gap: 5px; padding: 18px; background: rgba(255,255,255,.035); border-radius: 14px; }
+.garden-metrics small,.garden-metrics span { color: var(--muted); }
+.garden-metrics strong { color: var(--garden); font-size: 26px; }
+.garden-forecast { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+.garden-day { display: grid; gap: 7px; padding: 16px; border-radius: 14px; background: rgba(255,255,255,.035); }
+.garden-day > strong { color: var(--garden); font-size: 20px; }
+.garden-day small { color: var(--muted); }
+.garden-day p { margin-top: 6px; }
+.garden-note { color: var(--muted); text-align: center; font-size: 13px; }
+.bottom-nav .garden-active { color: var(--garden); }
+@media (max-width: 760px) {
+  .garden-hero { grid-template-columns: 1fr; padding: 22px; }
+  .garden-leaf { font-size: 52px; }
+  .garden-current { grid-column: 1; grid-template-columns: repeat(2,1fr); }
+  .garden-actions,.garden-panels,.garden-forecast { grid-template-columns: 1fr 1fr; }
+  .garden-metrics { grid-template-columns: repeat(2,1fr); }
+}
+@media (max-width: 480px) {
+  .garden-actions,.garden-panels,.garden-forecast { grid-template-columns: 1fr; }
+  .garden-heading { align-items: start; flex-direction: column; }
+}
