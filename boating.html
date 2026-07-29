@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fitz Boating Center</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="top-bar">
+      <div class="brand">
+        <span class="menu-icon">☰</span>
+        <img src="images/logo.png" alt="Fitz Weather HQ" class="logo">
+        <div class="brand-text">
+          <h1>FITZ BOATING CENTER</h1>
+          <h2>Quad Cities Boating Conditions</h2>
+          <p id="boating-updated">Loading live weather...</p>
+        </div>
+      </div>
+      <button class="refresh-button" aria-label="Refresh boating conditions">↻</button>
+    </header>
+
+    <main>
+      <section class="boating-hero large-card" id="boating-hero">
+        <div class="boating-hero-icon">🚤</div>
+        <div>
+          <p class="boating-eyebrow">Next 6 Hours</p>
+          <h2 id="boating-status">Checking Conditions</h2>
+          <div class="big-stars" id="boating-stars">☆☆☆☆☆</div>
+          <p id="boating-summary">Reviewing wind, storms, visibility, rain, and temperature.</p>
+        </div>
+        <div class="boating-score">
+          <strong id="boating-score">--</strong><span>/100</span>
+        </div>
+      </section>
+
+      <section class="boating-section large-card">
+        <div class="boating-section-heading">
+          <div><p class="boating-eyebrow">Today</p><h2>Best Boating Window</h2></div>
+          <span id="best-window-status">Checking...</span>
+        </div>
+        <div class="best-window" id="best-window">Finding the safest stretch in the forecast...</div>
+      </section>
+
+      <section class="boating-grid" aria-label="Boating conditions">
+        <article class="boating-detail-card"><span>💨</span><p>Wind & Gusts</p><strong id="boat-wind">--</strong><small id="boat-wind-note">Checking handling conditions</small></article>
+        <article class="boating-detail-card"><span>🧭</span><p>Wind Direction</p><strong id="boat-direction">--</strong><small id="boat-direction-note">Current direction</small></article>
+        <article class="boating-detail-card"><span>👁️</span><p>Visibility</p><strong id="boat-visibility">--</strong><small id="boat-visibility-note">Checking visibility</small></article>
+        <article class="boating-detail-card"><span>⛈️</span><p>Storm Safety</p><strong id="boat-storms">--</strong><small id="boat-storms-note">Checking lightning risk</small></article>
+        <article class="boating-detail-card"><span>🌧️</span><p>Rain Chance</p><strong id="boat-rain">--</strong><small id="boat-rain-note">Next 6 hours</small></article>
+        <article class="boating-detail-card"><span>🌡️</span><p>Temperature</p><strong id="boat-temperature">--</strong><small id="boat-temperature-note">Checking exposure comfort</small></article>
+        <article class="boating-detail-card"><span>🌅</span><p>Daylight</p><strong id="boat-daylight">--</strong><small id="boat-daylight-note">Sunrise to sunset</small></article>
+        <article class="boating-detail-card future"><span>🌊</span><p>River Conditions</p><strong>Coming Later</strong><small>River stage, current, and water temperature need a reliable source</small></article>
+      </section>
+
+      <section class="boating-section large-card">
+        <div class="boating-section-heading">
+          <div><p class="boating-eyebrow">Forecast</p><h2>Hourly Boating Outlook</h2></div>
+        </div>
+        <div class="boating-timeline" id="boating-timeline"><p>Loading hourly conditions...</p></div>
+      </section>
+
+      <p class="boating-disclaimer">Weather can change quickly on the water. Check current alerts and radar before departure, wear life jackets, and return to shore if thunder is heard.</p>
+    </main>
+
+    <nav class="bottom-nav">
+      <a href="index.html">🏠<span>Home</span></a>
+      <a href="storm.html">⛈️<span>Storm Center</span></a>
+      <a class="active" href="boating.html">🚤<span>Boating</span></a>
+      <a href="alerts.html"><span class="nav-icon">🔔<span class="alert-badge" aria-hidden="true"></span></span><span>Alerts</span></a>
+      <a href="garden.html">🌿<span>Garden</span></a>
+    </nav>
+  </div>
+  <script src="js/weather.js"></script>
+  <script src="js/scores.js"></script>
+  <script src="js/boating.js"></script>
+  <script src="js/alerts.js"></script>
+</body>
+</html>
