@@ -74,6 +74,7 @@ updateUVHighlight(data);
 updateKelseyUVIndex(data);
 updateHeatComfortCards(data);
 updateMicahMotorcycle(data);
+updateMomShooting(data);
 } catch (error) {
   console.error("Weather failed to load", error);
 
@@ -916,4 +917,60 @@ function updateBoatingCards(data) {
     stars.textContent = details.stars;
     rating.textContent = details.rating;
   });
+}
+
+
+// ----------------------------
+// Mom Shooting
+// Uses the next six usable daylight hours and rolls to tomorrow after sunset.
+// ----------------------------
+function updateMomShooting(data) {
+  const stars = document.getElementById("mom-shooting-stars");
+  const rating = document.getElementById("mom-shooting-rating");
+
+  if (!stars || !rating || !data?.hourly?.time ||
+      !data?.daily?.sunrise || !data?.daily?.sunset) return;
+
+  const now = new Date();
+  const todaySunset = new Date(data.daily.sunset[0]);
+  const targetDay = now <= todaySunset ? 0 : 1;
+  const sunrise = new Date(data.daily.sunrise[targetDay]);
+  const sunset = new Date(data.daily.sunset[targetDay]);
+  const windowStart = targetDay === 0 && now > sunrise ? now : sunrise;
+  const sixHoursLater = new Date(windowStart.getTime() + 6 * 60 * 60 * 1000);
+  const windowEnd = sixHoursLater < sunset ? sixHoursLater : sunset;
+  const upcoming = data.hourly.time
+    .map((time, index) => ({ time: new Date(time), index }))
+    .filter(item => item.time >= windowStart && item.time <= windowEnd);
+
+  if (upcoming.length === 0) {
+    stars.textContent = "☆☆☆☆☆";
+    rating.textContent = "Unavailable";
+    return;
+  }
+
+  const hourly = data.hourly;
+  const feelsLikeValues = upcoming.map(item =>
+    hourly.apparent_temperature[item.index] ?? 70
+  );
+  const coldest = Math.min(...feelsLikeValues);
+  const hottest = Math.max(...feelsLikeValues);
+  const feelsLike = calculateShootingScore({ feelsLike: coldest }) <
+    calculateShootingScore({ feelsLike: hottest }) ? coldest : hottest;
+
+  const weather = {
+    feelsLike,
+    wind: Math.max(...upcoming.map(item => hourly.wind_speed_10m[item.index] ?? 0)),
+    gusts: Math.max(...upcoming.map(item => hourly.wind_gusts_10m[item.index] ?? 0)),
+    visibility: Math.min(...upcoming.map(item => hourly.visibility[item.index] ?? 16093)),
+    rainChance: Math.max(...upcoming.map(item =>
+      hourly.precipitation_probability[item.index] ?? 0
+    )),
+    code: hourly.weather_code[upcoming[0].index],
+    forecastCodes: upcoming.map(item => hourly.weather_code[item.index])
+  };
+
+  const details = getShootingDetails(weather);
+  stars.textContent = details.stars;
+  rating.textContent = details.rating;
 }
