@@ -631,3 +631,71 @@ function getUVIndexDetails(uvIndex) {
   return { uv, stars: "★★★★★", rating: "Low" };
 }
 
+
+// ----------------------------
+// Shooting Conditions Score
+// Evaluates the next usable six-hour daylight window.
+// ----------------------------
+function calculateShootingScore(weather) {
+  let score = 100;
+  const wind = weather.wind ?? 0;
+  const gusts = weather.gusts ?? wind;
+  const visibility = weather.visibility ?? 16093;
+  const feelsLike = weather.feelsLike ?? 70;
+  const rainChance = weather.rainChance ?? 0;
+  const forecastCodes = weather.forecastCodes ?? [weather.code];
+  const stormCodes = [95, 96, 99];
+  const rainCodes = [51, 53, 55, 61, 63, 65, 80, 81, 82];
+  const snowCodes = [71, 73, 75, 77, 85, 86];
+  const fogCodes = [45, 48];
+
+  // Lightning and thunderstorms make an outdoor range unsafe.
+  if (forecastCodes.some(code => stormCodes.includes(code))) return 0;
+
+  // Wind is weighted heavily because it affects safe handling and accuracy.
+  if (wind >= 30) score -= 65;
+  else if (wind >= 25) score -= 48;
+  else if (wind >= 20) score -= 32;
+  else if (wind >= 15) score -= 18;
+  else if (wind >= 10) score -= 7;
+
+  if (gusts >= 40) score -= 60;
+  else if (gusts >= 35) score -= 45;
+  else if (gusts >= 30) score -= 30;
+  else if (gusts >= 25) score -= 15;
+
+  if (forecastCodes.some(code => rainCodes.includes(code))) score -= 38;
+  else if (rainChance >= 70) score -= 40;
+  else if (rainChance >= 50) score -= 28;
+  else if (rainChance >= 30) score -= 14;
+
+  if (forecastCodes.some(code => snowCodes.includes(code))) score -= 50;
+  if (forecastCodes.some(code => fogCodes.includes(code))) score -= 25;
+
+  if (visibility < 805) score -= 65;
+  else if (visibility < 1609) score -= 45;
+  else if (visibility < 4828) score -= 22;
+
+  if (feelsLike >= 105) score -= 40;
+  else if (feelsLike >= 95) score -= 24;
+  else if (feelsLike >= 88) score -= 10;
+  else if (feelsLike <= 20) score -= 40;
+  else if (feelsLike <= 32) score -= 25;
+  else if (feelsLike <= 45) score -= 10;
+
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function getShootingDetails(weather) {
+  const score = calculateShootingScore(weather);
+  const rating = getRating(score);
+  let status = rating.word;
+
+  if (score < 30) status = "Do Not Shoot";
+  else if (score < 65) status = "Use Caution";
+  else if (score >= 90) status = "Excellent";
+  else if (score >= 80) status = "Great";
+  else status = "Good";
+
+  return { score, stars: rating.stars, rating: status };
+}
