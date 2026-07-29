@@ -75,6 +75,7 @@ updateKelseyUVIndex(data);
 updateHeatComfortCards(data);
 updateMicahMotorcycle(data);
 updateMomShooting(data);
+updateDailyScores();
 } catch (error) {
   console.error("Weather failed to load", error);
 
@@ -769,6 +770,29 @@ function updateMicahMotorcycle(data) {
   const details = getMotorcycleDetails(weather);
   stars.textContent = details.stars;
   rating.textContent = details.rating;
+  updateMotorcycleHighlight(details);
+}
+
+function updateMotorcycleHighlight(details) {
+  const title = document.getElementById("motorcycle-highlight-title");
+  const message = document.getElementById("motorcycle-highlight-message");
+  if (!title || !message) return;
+
+  title.textContent = details.rating;
+
+  if (details.score >= 80) {
+    message.textContent = "Excellent conditions for the next daylight ride";
+    message.className = "good";
+  } else if (details.score >= 65) {
+    message.textContent = "Good riding conditions with minor concerns";
+    message.className = "good";
+  } else if (details.score >= 30) {
+    message.textContent = "Check wind, rain, and visibility before riding";
+    message.className = "watch";
+  } else {
+    message.textContent = "Unsafe riding conditions in the next daylight window";
+    message.className = "bad";
+  }
 }
 
 // ----------------------------
@@ -973,4 +997,48 @@ function updateMomShooting(data) {
   const details = getShootingDetails(weather);
   stars.textContent = details.stars;
   rating.textContent = details.rating;
+}
+
+
+// ----------------------------
+// Family Daily Scores
+// Each score is the average of that person's three live activity cards.
+// ----------------------------
+function updateDailyScores() {
+  const people = {
+    dad: ["dad-dog-walking-stars", "dad-boating-stars", "dad-storm-stars"],
+    mom: ["mom-boating-stars", "mom-shooting-stars", "mom-general-outdoors-stars"],
+    nathan: ["nathan-garden-stars", "nathan-grilling-stars", "nathan-general-outdoors-stars"],
+    kelsey: ["kelsey-uv-stars", "kelsey-heat-comfort-stars", "kelsey-6am-walk-stars"],
+    micah: ["micah-motorcycle-stars", "micah-heat-comfort-stars", "micah-storm-stars"]
+  };
+
+  Object.entries(people).forEach(([person, activityIds]) => {
+    const activityStars = activityIds
+      .map(id => document.getElementById(id)?.textContent || "")
+      .filter(stars => stars.includes("★") || stars.includes("☆"));
+
+    if (activityStars.length !== activityIds.length) return;
+
+    const averageStars = activityStars.reduce(
+      (total, stars) => total + [...stars].filter(star => star === "★").length,
+      0
+    ) / activityStars.length;
+
+    const roundedStars = Math.max(0, Math.min(5, Math.round(averageStars)));
+    const starsText = "★".repeat(roundedStars) + "☆".repeat(5 - roundedStars);
+    let rating = "Skip";
+
+    if (averageStars >= 4.5) rating = "Perfect";
+    else if (averageStars >= 3.5) rating = "Great";
+    else if (averageStars >= 2.5) rating = "Good";
+    else if (averageStars >= 1.5) rating = "Fair";
+    else if (averageStars >= 0.5) rating = "Poor";
+
+    const starsElement = document.getElementById(`${person}-daily-stars`);
+    const ratingElement = document.getElementById(`${person}-daily-rating`);
+
+    if (starsElement) starsElement.textContent = starsText;
+    if (ratingElement) ratingElement.textContent = rating;
+  });
 }
