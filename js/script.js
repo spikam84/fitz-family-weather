@@ -72,6 +72,7 @@ updateStormHighlight(data);
 updateFireworksHighlight();
 updateUVHighlight(data);
 updateKelseyUVIndex(data);
+updateHeatComfortCards(data);
 } catch (error) {
   console.error("Weather failed to load", error);
 
@@ -208,8 +209,7 @@ function updateGeneralOutdoors(data) {
 
   const cards = [
     ["mom-general-outdoors-stars", "mom-general-outdoors-rating"],
-    ["nathan-general-outdoors-stars", "nathan-general-outdoors-rating"],
-    ["micah-general-outdoors-stars", "micah-general-outdoors-rating"]
+    ["nathan-general-outdoors-stars", "nathan-general-outdoors-rating"]
   ];
 
   cards.forEach(([starsId, ratingId]) => {
@@ -722,6 +722,49 @@ function updateKelseyUVIndex(data) {
 
   stars.textContent = details.stars;
   rating.textContent = details.rating;
+}
+
+
+// ----------------------------
+// Kelsey and Micah Heat Comfort
+// Uses the hottest remaining daylight feels-like temperature,
+// then rolls to tomorrow after sunset.
+// ----------------------------
+function updateHeatComfortCards(data) {
+  if (!data?.hourly?.time || !data?.daily?.sunrise || !data?.daily?.sunset) return;
+
+  const cards = [
+    ["kelsey-heat-comfort-stars", "kelsey-heat-comfort-rating"],
+    ["micah-heat-comfort-stars", "micah-heat-comfort-rating"]
+  ];
+  const now = new Date();
+  const todaySunset = new Date(data.daily.sunset[0]);
+  const targetDay = now <= todaySunset ? 0 : 1;
+  const targetSunrise = new Date(data.daily.sunrise[targetDay]);
+  const targetSunset = new Date(data.daily.sunset[targetDay]);
+  const windowStart = targetDay === 0 && now > targetSunrise ? now : targetSunrise;
+
+  const daylightHours = data.hourly.time
+    .map((time, index) => ({ time: new Date(time), index }))
+    .filter(item => item.time >= windowStart && item.time <= targetSunset);
+
+  const hottestFeelsLike = daylightHours.length
+    ? Math.max(
+        ...daylightHours.map(item =>
+          data.hourly.apparent_temperature[item.index] ?? Number.NEGATIVE_INFINITY
+        )
+      )
+    : null;
+  const details = getHeatComfortDetails(hottestFeelsLike);
+
+  cards.forEach(([starsId, ratingId]) => {
+    const stars = document.getElementById(starsId);
+    const rating = document.getElementById(ratingId);
+    if (!stars || !rating) return;
+
+    stars.textContent = details.stars;
+    rating.textContent = details.rating;
+  });
 }
 
 // ----------------------------
