@@ -282,3 +282,71 @@ function getDogWalkingDetails(weather) {
     rating: rating.word
   };
 }
+
+// ----------------------------
+// Kelsey 6 AM Walk Score
+// Scores the forecast for the next upcoming 6:00 AM
+// ----------------------------
+function calculate6AMWalkScore(weather) {
+  let score = 100;
+
+  const feelsLike = weather.feelsLike ?? weather.temp ?? 65;
+  const humidity = weather.humidity ?? 50;
+  const wind = weather.wind ?? 0;
+  const rainChance = weather.rainChance ?? 0;
+  const code = weather.code;
+
+  const thunderstormCodes = [95, 96, 99];
+  const rainCodes = [51, 53, 55, 61, 63, 65, 80, 81, 82];
+  const snowCodes = [71, 73, 75];
+  const fogCodes = [45, 48];
+
+  // Lightning makes the walk unsafe.
+  if (thunderstormCodes.includes(code)) return 0;
+
+  // Temperature comfort at 6 AM.
+  if (feelsLike >= 95) score -= 55;
+  else if (feelsLike >= 90) score -= 35;
+  else if (feelsLike >= 85) score -= 18;
+  else if (feelsLike >= 80) score -= 8;
+
+  if (feelsLike <= 5) score -= 65;
+  else if (feelsLike <= 15) score -= 45;
+  else if (feelsLike <= 25) score -= 28;
+  else if (feelsLike <= 35) score -= 15;
+  else if (feelsLike <= 45) score -= 7;
+
+  // Humidity, wind, precipitation, and visibility concerns.
+  if (humidity >= 90) score -= 12;
+  else if (humidity >= 80) score -= 7;
+
+  if (wind >= 30) score -= 45;
+  else if (wind >= 22) score -= 28;
+  else if (wind >= 15) score -= 12;
+
+  if (rainCodes.includes(code)) score -= 25;
+  if (snowCodes.includes(code)) score -= 35;
+  if (fogCodes.includes(code)) score -= 15;
+
+  if (rainChance >= 70) score -= 30;
+  else if (rainChance >= 50) score -= 20;
+  else if (rainChance >= 30) score -= 10;
+
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function get6AMWalkDetails(weather) {
+  const score = calculate6AMWalkScore(weather);
+  const rating = getRating(score);
+
+  let status = "Good to Go";
+  if (score < 30) status = "Skip Walk";
+  else if (score < 65) status = "Use Caution";
+
+  return {
+    score,
+    stars: rating.stars,
+    rating: status
+  };
+}
+
