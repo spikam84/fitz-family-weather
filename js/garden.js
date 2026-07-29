@@ -17,10 +17,17 @@ function answer(id, value) {
   element.classList.add(/wait|hold|wet|poor|high/i.test(value) ? "poor" : /fair|spot|optional|moderate|check/i.test(value) ? "watch" : "good");
 }
 
-function bestWindow(hourly, start) {
+function bestWindow(hourly, daily, start) {
+  const daylight = (daily.time || []).map((day, index) => ({
+    sunrise: new Date(daily.sunrise[index]),
+    sunset: new Date(daily.sunset[index])
+  })).filter(period => period.sunset > start);
+
   const candidates = hourly.time.map((time, index) => ({ time: new Date(time), index }))
-    .filter(item => item.time >= start && item.time < new Date(start.getTime() + 24 * 3600000))
-    .filter(item => item.time.getHours() >= 6 && item.time.getHours() <= 21)
+    .filter(item => daylight.some(period =>
+      item.time >= (start > period.sunrise ? start : period.sunrise) &&
+      item.time < period.sunset
+    ))
     .map(item => {
       const rain = number(hourly.precipitation_probability[item.index]);
       const temp = number(hourly.apparent_temperature[item.index]);
@@ -31,8 +38,10 @@ function bestWindow(hourly, start) {
     }).sort((a,b) => b.score-a.score);
   if (!candidates.length) return "No clear window";
   const startTime = candidates[0].time;
-  const endTime = new Date(startTime.getTime() + 3 * 3600000);
-  const format = date => date.toLocaleTimeString([], { hour: "numeric" });
+  const activePeriod = daylight.find(period => startTime >= period.sunrise && startTime < period.sunset);
+  const proposedEnd = new Date(startTime.getTime() + 3 * 3600000);
+  const endTime = activePeriod && proposedEnd > activePeriod.sunset ? activePeriod.sunset : proposedEnd;
+  const format = date => date.toLocaleTimeString([], { hour: "numeric", minute: date.getMinutes() ? "2-digit" : undefined });
   return `${format(startTime)}–${format(endTime)}`;
 }
 
@@ -53,7 +62,7 @@ async function updateGarden() {
   const button = document.querySelector(".refresh-button");
   button?.classList.add("spinning");
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${GARDEN_LAT}&longitude=${GARDEN_LON}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,precipitation_probability,precipitation,uv_index,soil_temperature_0cm,soil_moisture_0_to_1cm&past_days=1&forecast_days=5&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max&temperature_unit=fahrenheit&precipitation_unit=inch&wind_speed_unit=mph&timezone=America%2FChicago`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${GARDEN_LAT}&longitude=${GARDEN_LON}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,precipitation_probability,precipitation,uv_index,soil_temperature_0cm,soil_moisture_0_to_1cm&past_days=1&forecast_days=5&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,sunrise,sunset&temperature_unit=fahrenheit&precipitation_unit=inch&wind_speed_unit=mph&timezone=America%2FChicago`;
     const response = await fetch(url);
     if (!response.ok) throw new Error(`Weather request failed: ${response.status}`);
     const data = await response.json();
@@ -74,7 +83,7 @@ async function updateGarden() {
     const soilTemp = number(data.hourly.soil_temperature_0cm[currentIndex],NaN);
     const soilValue = number(data.hourly.soil_moisture_0_to_1cm[currentIndex],NaN);
     const uv = max(pick("uv_index",future));
-    const window = bestWindow(data.hourly,now);
+    const window = bestWindow(data.hourly,data.daily,now);
     const storm = STORMS.includes(code);
     const ground = rainPast >= .5 || soilValue >= .36 ? "Muddy" : rainPast >= .15 || soilValue >= .27 ? "Damp" : rainPast < .03 && soilValue < .16 ? "Dry" : "Workable";
     const soil = soilValue >= .36 ? "Wet" : soilValue >= .25 ? "Moist" : soilValue >= .16 ? "Moderate" : "Dry";
