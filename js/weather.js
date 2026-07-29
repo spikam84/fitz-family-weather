@@ -65,8 +65,8 @@ const WEATHER_ICONS = {
 async function fetchWeatherData() {
   const url =
     `https://api.open-meteo.com/v1/forecast?latitude=${WEATHER_LAT}&longitude=${WEATHER_LON}` +
-    `&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m` +
-    `&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,precipitation_probability,cloud_cover,uv_index` +
+    `&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,visibility` +
+    `&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,visibility,precipitation_probability,cloud_cover,uv_index` +
     `&daily=sunrise,sunset` +
     `&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FChicago`;
 
@@ -127,6 +127,9 @@ function normalizeWeatherData(data) {
       feelsLike: current.apparent_temperature,
       humidity: current.relative_humidity_2m,
       windSpeed: current.wind_speed_10m,
+      windGusts: current.wind_gusts_10m,
+      windDirection: current.wind_direction_10m,
+      visibility: current.visibility,
       weatherCode: code,
       condition: WEATHER_CODES[code] || "Unknown",
       icon: WEATHER_ICONS[code] || "🌤️"
