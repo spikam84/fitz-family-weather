@@ -84,6 +84,43 @@ function calculateOutdoorScore(weather) {
   return Math.max(0, Math.min(100, Math.round(score)));
 }
 // ----------------------------
+// Garden Conditions Score
+// Shared by the Garden Center and Nathan's dashboard card
+// ----------------------------
+function calculateGardenScore(weather) {
+  let score = 100;
+
+  const feelsLike = weather.feelsLike ?? 70;
+  const wind = weather.wind ?? 0;
+  const rainChance = weather.rainChance ?? 0;
+  const code = weather.code;
+  const stormCodes = [95, 96, 99];
+
+  if (stormCodes.includes(code)) score -= 55;
+  else if (rainChance >= 55) score -= 25;
+
+  if (feelsLike >= 100) score -= 45;
+  else if (feelsLike >= 92) score -= 28;
+  else if (feelsLike >= 85) score -= 12;
+
+  if (wind >= 25) score -= 30;
+  else if (wind >= 18) score -= 15;
+
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function getGardenDetails(weather) {
+  const score = calculateGardenScore(weather);
+  const rating = getRating(score);
+
+  return {
+    score,
+    stars: rating.stars,
+    rating: rating.word
+  };
+}
+
+// ----------------------------
 // Storm Watching Score
 // ----------------------------
 function calculateStormWatchingScore(weather) {
