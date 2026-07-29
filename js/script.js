@@ -71,6 +71,7 @@ updateFireworksForecast(data);
 updateStormHighlight(data);
 updateFireworksHighlight();
 updateUVHighlight(data);
+updateKelseyUVIndex(data);
 } catch (error) {
   console.error("Weather failed to load", error);
 
@@ -682,6 +683,42 @@ function updateNathanGrilling(data) {
 
   const weather = getGeneralOutdoorsWeather(data);
   const details = getGrillingDetails(weather);
+
+  stars.textContent = details.stars;
+  rating.textContent = details.rating;
+}
+
+// ----------------------------
+// Kelsey UV Index
+// Uses the highest remaining daylight UV, then rolls to tomorrow after sunset.
+// ----------------------------
+function updateKelseyUVIndex(data) {
+  const stars = document.getElementById("kelsey-uv-stars");
+  const rating = document.getElementById("kelsey-uv-rating");
+
+  if (!stars || !rating || !data?.hourly?.time || !data?.daily?.sunset) return;
+
+  const now = new Date();
+  const todaySunset = new Date(data.daily.sunset[0]);
+  const targetDay = now <= todaySunset ? 0 : 1;
+  const targetSunrise = new Date(data.daily.sunrise[targetDay]);
+  const targetSunset = new Date(data.daily.sunset[targetDay]);
+  const windowStart = targetDay === 0 && now > targetSunrise ? now : targetSunrise;
+
+  const daylightHours = data.hourly.time
+    .map((time, index) => ({ time: new Date(time), index }))
+    .filter(item => item.time >= windowStart && item.time <= targetSunset);
+
+  if (daylightHours.length === 0) {
+    stars.textContent = "☆☆☆☆☆";
+    rating.textContent = "Unavailable";
+    return;
+  }
+
+  const maxUV = Math.max(
+    ...daylightHours.map(item => data.hourly.uv_index[item.index] ?? 0)
+  );
+  const details = getUVIndexDetails(maxUV);
 
   stars.textContent = details.stars;
   rating.textContent = details.rating;
