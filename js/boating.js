@@ -14,22 +14,29 @@ function boatingStatusClass(score) {
   return "danger";
 }
 
-function buildBoatingWeather(data, items) {
+function buildBoatingWeather(data, items, includeCurrent = true) {
   const current = data.current;
   const hourly = data.hourly;
   const values = (field, fallback) =>
     items.map(item => hourly[field]?.[item.index] ?? fallback);
+  const currentValue = (value) => includeCurrent ? [value] : [];
 
-  const feels = [current.apparent_temperature, ...values("apparent_temperature", current.apparent_temperature)];
+  const feels = [
+    ...currentValue(current.apparent_temperature),
+    ...values("apparent_temperature", current.apparent_temperature)
+  ];
 
   return {
     feelsLike: Math.max(...feels),
-    wind: Math.max(current.wind_speed_10m, ...values("wind_speed_10m", 0)),
-    gusts: Math.max(current.wind_gusts_10m ?? current.wind_speed_10m, ...values("wind_gusts_10m", 0)),
-    visibility: Math.min(current.visibility ?? 16093, ...values("visibility", 16093)),
+    wind: Math.max(...currentValue(current.wind_speed_10m), ...values("wind_speed_10m", 0)),
+    gusts: Math.max(...currentValue(current.wind_gusts_10m ?? current.wind_speed_10m), ...values("wind_gusts_10m", 0)),
+    visibility: Math.min(...currentValue(current.visibility ?? 16093), ...values("visibility", 16093)),
     rainChance: Math.max(0, ...values("precipitation_probability", 0)),
-    code: current.weather_code,
-    forecastCodes: [current.weather_code, ...values("weather_code", current.weather_code)]
+    code: includeCurrent ? current.weather_code : hourly.weather_code[items[0].index],
+    forecastCodes: [
+      ...currentValue(current.weather_code),
+      ...values("weather_code", current.weather_code)
+    ]
   };
 }
 
@@ -122,7 +129,8 @@ async function loadBoating() {
       .filter(item => item.time >= daylight.start && item.time <= daylight.end);
     if (!items.length) throw new Error("No daylight boating forecast available");
 
-    const weather = buildBoatingWeather(data, items);
+    const includeCurrent = daylight.start.getTime() === now.getTime();
+    const weather = buildBoatingWeather(data, items, includeCurrent);
     const details = getBoatingDetails(weather);
     const state = boatingStatusClass(details.score);
 
