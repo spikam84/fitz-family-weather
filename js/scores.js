@@ -508,6 +508,70 @@ function getBoatingDetails(weather) {
 
 
 // ----------------------------
+// Motorcycle Riding Score
+// Evaluates the next usable daylight riding window.
+// ----------------------------
+function calculateMotorcycleScore(weather) {
+  let score = 100;
+  const wind = weather.wind ?? 0;
+  const gusts = weather.gusts ?? wind;
+  const visibility = weather.visibility ?? 16093;
+  const feelsLike = weather.feelsLike ?? 70;
+  const rainChance = weather.rainChance ?? 0;
+  const forecastCodes = weather.forecastCodes ?? [weather.code];
+  const stormCodes = [95, 96, 99];
+  const rainCodes = [51, 53, 55, 61, 63, 65, 80, 81, 82];
+  const snowCodes = [71, 73, 75, 77, 85, 86];
+  const fogCodes = [45, 48];
+
+  if (forecastCodes.some(code => stormCodes.includes(code))) return 0;
+  if (forecastCodes.some(code => snowCodes.includes(code))) return 0;
+
+  if (forecastCodes.some(code => rainCodes.includes(code))) score -= 55;
+  else if (rainChance >= 70) score -= 55;
+  else if (rainChance >= 50) score -= 38;
+  else if (rainChance >= 30) score -= 20;
+  else if (rainChance >= 15) score -= 8;
+
+  if (wind >= 30) score -= 60;
+  else if (wind >= 25) score -= 42;
+  else if (wind >= 20) score -= 28;
+  else if (wind >= 15) score -= 14;
+
+  if (gusts >= 40) score -= 65;
+  else if (gusts >= 35) score -= 48;
+  else if (gusts >= 30) score -= 32;
+  else if (gusts >= 25) score -= 16;
+
+  if (visibility < 805) score -= 65;
+  else if (visibility < 1609) score -= 45;
+  else if (visibility < 4828) score -= 22;
+  if (forecastCodes.some(code => fogCodes.includes(code))) score -= 25;
+
+  if (feelsLike >= 105) score -= 45;
+  else if (feelsLike >= 95) score -= 25;
+  else if (feelsLike >= 88) score -= 12;
+  else if (feelsLike <= 32) score -= 55;
+  else if (feelsLike <= 40) score -= 35;
+  else if (feelsLike <= 50) score -= 18;
+  else if (feelsLike <= 58) score -= 8;
+
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function getMotorcycleDetails(weather) {
+  const score = calculateMotorcycleScore(weather);
+  const rating = getRating(score);
+  let status = rating.word;
+  if (score < 30) status = "Don't Ride";
+  else if (score < 65) status = "Use Caution";
+  else if (score >= 90) status = "Perfect Ride";
+  else if (score >= 80) status = "Great Ride";
+  else status = "Good Ride";
+  return { score, stars: rating.stars, rating: status };
+}
+
+// ----------------------------
 // Heat Comfort
 // More stars mean more comfortable conditions in the heat.
 // ----------------------------
