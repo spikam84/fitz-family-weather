@@ -78,6 +78,36 @@ function showUnavailable() {
   document.getElementById("boating-updated").textContent = "Weather service unavailable";
 }
 
+function getDaylightBoatingWindow(data, now) {
+  const sunrises = data.daily?.sunrise || [];
+  const sunsets = data.daily?.sunset || [];
+  const periods = sunrises.map((sunrise, index) => ({
+    sunrise: new Date(sunrise),
+    sunset: new Date(sunsets[index])
+  })).filter(period =>
+    !Number.isNaN(period.sunrise.getTime()) &&
+    !Number.isNaN(period.sunset.getTime()) &&
+    period.sunset > now
+  );
+
+  const period = periods[0];
+  if (!period) return null;
+
+  const start = now < period.sunrise ? period.sunrise : now;
+  const end = new Date(Math.min(
+    start.getTime() + 6 * 60 * 60 * 1000,
+    period.sunset.getTime()
+  ));
+
+  return {
+    start,
+    end,
+    sunrise: period.sunrise,
+    sunset: period.sunset,
+    rolledToNextDay: period.sunrise.toDateString() !== now.toDateString()
+  };
+}
+
 async function loadBoating() {
   try {
     const result = await getWeather();
@@ -85,9 +115,13 @@ async function loadBoating() {
     if (!data?.current || !data?.hourly?.time) throw new Error("No boating forecast available");
 
     const now = new Date();
-    const cutoff = new Date(now.getTime() + 6 * 60 * 60 * 1000);
+    const daylight = getDaylightBoatingWindow(data, now);
+    if (!daylight) throw new Error("No daylight boating window available");
+
     const items = data.hourly.time.map((time, index) => ({ time: new Date(time), index }))
-      .filter(item => item.time >= now && item.time <= cutoff);
+      .filter(item => item.time >= daylight.start && item.time <= daylight.end);
+    if (!items.length) throw new Error("No daylight boating forecast available");
+
     const weather = buildBoatingWeather(data, items);
     const details = getBoatingDetails(weather);
     const state = boatingStatusClass(details.score);
@@ -116,8 +150,10 @@ async function loadBoating() {
     document.getElementById("boat-rain-note").textContent = weather.rainChance >= 50 ? "Rain could interrupt boating" : "Low interruption risk";
     document.getElementById("boat-temperature").textContent = `${Math.round(data.current.temperature_2m)}°F`;
     document.getElementById("boat-temperature-note").textContent = `Feels as high as ${Math.round(weather.feelsLike)}°`;
-    document.getElementById("boat-daylight").textContent = `${formatBoatTime(data.daily.sunrise[0])}–${formatBoatTime(data.daily.sunset[0])}`;
-    document.getElementById("boat-daylight-note").textContent = `Sunset ${formatBoatTime(data.daily.sunset[0])}`;
+    document.getElementById("boat-daylight").textContent = `${formatBoatTime(daylight.sunrise)}–${formatBoatTime(daylight.sunset)}`;
+    document.getElementById("boat-daylight-note").textContent = daylight.rolledToNextDay
+      ? `Next boating hours · Tomorrow at sunrise`
+      : `Boating ends at sunset · ${formatBoatTime(daylight.sunset)}`;
 
     const best = findBestWindow(data, items);
     if (best) {
