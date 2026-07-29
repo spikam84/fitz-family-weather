@@ -506,6 +506,41 @@ function getBoatingDetails(weather) {
   };
 }
 
+
+// ----------------------------
+// Heat Comfort
+// More stars mean more comfortable conditions in the heat.
+// ----------------------------
+function getHeatComfortDetails(feelsLike) {
+  const temperature = Number(feelsLike);
+
+  if (!Number.isFinite(temperature)) {
+    return { feelsLike: null, stars: "☆☆☆☆☆", rating: "Unavailable" };
+  }
+
+  if (temperature >= 105) {
+    return { feelsLike: temperature, stars: "☆☆☆☆☆", rating: "Dangerous" };
+  }
+
+  if (temperature >= 95) {
+    return { feelsLike: temperature, stars: "★☆☆☆☆", rating: "Very Hot" };
+  }
+
+  if (temperature >= 90) {
+    return { feelsLike: temperature, stars: "★★☆☆☆", rating: "Hot" };
+  }
+
+  if (temperature >= 85) {
+    return { feelsLike: temperature, stars: "★★★☆☆", rating: "Warm" };
+  }
+
+  if (temperature >= 80) {
+    return { feelsLike: temperature, stars: "★★★★☆", rating: "Mild" };
+  }
+
+  return { feelsLike: temperature, stars: "★★★★★", rating: "Comfortable" };
+}
+
 // ----------------------------
 // UV Index
 // More stars mean safer conditions for unprotected sun exposure.
