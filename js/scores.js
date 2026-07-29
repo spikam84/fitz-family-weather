@@ -22,67 +22,94 @@ function getRating(score) {
   return { stars: "☆☆☆☆☆", word: "Skip", message: "Better indoor plans today." };
 }function getOutdoorReasons(weather) {
   const reasons = [];
+  const rainChance = weather.rainChance ?? 0;
+  const forecastCodes = weather.forecastCodes ?? [weather.code];
+  const stormCodes = [95, 96, 99];
+  const wetCodes = [51, 53, 55, 61, 63, 65, 80, 81, 82];
 
   if (weather.wind < 12) {
     reasons.push("✅ Comfortable wind");
   } else if (weather.wind < 20) {
-    reasons.push("⚠️ Breezy conditions");
+    reasons.push("⚠️ Breezy during the next 6 hours");
   } else {
     reasons.push("⚠️ Wind may limit outdoor plans");
   }
 
-  const rainyOrStormyCodes = [51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99];
-
-  if (!rainyOrStormyCodes.includes(weather.code)) {
-    reasons.push("✅ Dry conditions");
+  if (forecastCodes.some(code => stormCodes.includes(code))) {
+    reasons.push("⚠️ Thunderstorms possible within 6 hours");
+  } else if (
+    forecastCodes.some(code => wetCodes.includes(code)) ||
+    rainChance >= 50
+  ) {
+    reasons.push("⚠️ Rain possible within 6 hours");
+  } else if (rainChance >= 30) {
+    reasons.push(`⚠️ ${Math.round(rainChance)}% rain chance within 6 hours`);
   } else {
-    reasons.push("⚠️ Rain or storms possible");
+    reasons.push("✅ Dry for the next 6 hours");
   }
 
   if (weather.feelsLike >= 90) {
-    reasons.push("⚠️ Heat index above 90°");
+    reasons.push("⚠️ Feels-like temperature above 90°");
   } else if (weather.feelsLike <= 45) {
-    reasons.push("⚠️ Chilly outside");
+    reasons.push("⚠️ Chilly during the next 6 hours");
   } else {
     reasons.push("✅ Comfortable temperature");
   }
 
   return reasons;
 }
+
 // ----------------------------
 // Outdoor Score
+// Uses current conditions plus the least comfortable forecast values
+// from the next 6 hours.
 // ----------------------------
 function calculateOutdoorScore(weather) {
   let score = 100;
 
+  const rainChance = weather.rainChance ?? 0;
+  const forecastCodes = weather.forecastCodes ?? [weather.code];
+  const stormCodes = [95, 96, 99];
+  const rainCodes = [51, 53, 55, 61, 63, 65, 80, 81, 82];
+  const snowCodes = [71, 73, 75];
+
   // Temperature comfort
-  if (weather.feelsLike >= 90) score -= 18;
+  if (weather.feelsLike >= 100) score -= 35;
+  else if (weather.feelsLike >= 95) score -= 28;
+  else if (weather.feelsLike >= 90) score -= 18;
   else if (weather.feelsLike >= 85) score -= 10;
+  else if (weather.feelsLike <= 20) score -= 35;
   else if (weather.feelsLike <= 32) score -= 20;
   else if (weather.feelsLike <= 45) score -= 10;
 
   // Humidity comfort
-  if (weather.humidity >= 75) score -= 10;
+  if (weather.humidity >= 80) score -= 10;
   else if (weather.humidity >= 65) score -= 5;
 
   // Wind comfort
-  if (weather.wind >= 25) score -= 18;
+  if (weather.wind >= 30) score -= 28;
+  else if (weather.wind >= 25) score -= 18;
   else if (weather.wind >= 18) score -= 10;
   else if (weather.wind >= 12) score -= 5;
 
-  // Weather condition penalty
-  const rainyOrStormyCodes = [
-    51, 53, 55, 61, 63, 65,
-    80, 81, 82, 95, 96, 99
-  ];
+  // Forecast hazards
+  if (forecastCodes.some(code => stormCodes.includes(code))) {
+    score -= 45;
+  } else if (forecastCodes.some(code => rainCodes.includes(code))) {
+    score -= 25;
+  } else if (rainChance >= 70) {
+    score -= 25;
+  } else if (rainChance >= 50) {
+    score -= 18;
+  } else if (rainChance >= 30) {
+    score -= 8;
+  }
 
-  const snowyCodes = [71, 73, 75];
-
-  if (rainyOrStormyCodes.includes(weather.code)) score -= 25;
-  if (snowyCodes.includes(weather.code)) score -= 30;
+  if (forecastCodes.some(code => snowCodes.includes(code))) score -= 30;
 
   return Math.max(0, Math.min(100, Math.round(score)));
 }
+
 // ----------------------------
 // Garden Conditions Score
 // Shared by the Garden Center and Nathan's dashboard card
