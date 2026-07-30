@@ -318,14 +318,26 @@ async function updateRadarAwareness() {
             const insideRadarArea =
                 pixelPosition(index).distance <= imageRadiusMiles;
 
-            // NOAA's PNG is an opaque 95-color reflectivity raster. Alpha marks
-            // raster coverage, not rain. The blue/green portion of its color ramp
-            // includes weak returns and clutter; meaningful echoes begin where the
-            // ramp changes to olive/yellow/red (red >= 34 and blue <= 10).
+            // NOAA's reflectivity ramp begins with blue/green shades for weak
+            // echoes, followed by yellow/red shades for stronger precipitation.
+            // Alpha marks raster coverage rather than precipitation, so require a
+            // recognizable ramp color and let the coherence checks below remove
+            // isolated light-return clutter.
+            const isWeakBlueEcho =
+                blue >= 45 &&
+                blue >= red + 20 &&
+                blue >= green * 0.85;
+            const isWeakGreenEcho =
+                green >= 45 &&
+                green >= red + 18 &&
+                green >= blue * 0.75;
+            const isWarmEcho =
+                red >= 34 && blue <= 20;
             const isEchoColor =
-                alpha > 0 && red >= 34 && blue <= 10;
+                alpha > 0 &&
+                (isWeakBlueEcho || isWeakGreenEcho || isWarmEcho);
             const isStrongEchoColor =
-                isEchoColor && red >= 230 && green <= 177 && blue <= 2;
+                isEchoColor && red >= 230 && green <= 177 && blue <= 10;
 
             if (insideRadarArea && isEchoColor) {
                 candidates[index] = 1;
@@ -415,20 +427,16 @@ async function updateRadarAwareness() {
                 }
             }
 
-            const strongPixelFraction = strongPixelCount / pixels.length;
-
-            // A real precipitation area must be spatially coherent and contain a
-            // meaningful stronger core. This rejects small warm-color speckles and
-            // broad low-level clutter without relying on alpha transparency.
-            if (
-                pixels.length >= 20 &&
-                strongPixelCount >= 8 &&
-                strongPixelFraction >= 0.05
-            ) {
+            // Spatial coherence is the primary clutter filter. A compact light-rain
+            // area is valid even when it has no yellow/red core; slightly larger
+            // minimum area is required for an all-weak region.
+            const minimumArea = strongPixelCount > 0 ? 20 : 32;
+            if (pixels.length >= minimumArea) {
                 regions.push({
                     pixels,
                     area: pixels.length,
                     strongPixelCount,
+                    motionWeight: pixels.length + strongPixelCount * 4,
                     centroidEast: eastTotal / pixels.length,
                     centroidNorth: northTotal / pixels.length,
                     nearestDistance
@@ -452,57 +460,38 @@ async function updateRadarAwareness() {
         const nearbyRegions = regions.filter(
             region => region.nearestDistance <= detectionRadiusMiles
         );
-        const directionScores = new Map();
         let nearestDistance = Infinity;
+        let nearestPosition = null;
 
+        // Distance and direction both come from the closest valid echo. This keeps
+        // a larger, more distant rain band from overriding precipitation nearer to
+        // the Quad Cities.
         for (const region of nearbyRegions) {
             for (const index of region.pixels) {
                 const position = pixelPosition(index);
-                if (position.distance > detectionRadiusMiles) continue;
-
-                nearestDistance = Math.min(nearestDistance, position.distance);
-                if (position.distance <= 2) continue;
-
-                const direction = getCompassDirection(
-                    position.eastMiles,
-                    position.northMiles
-                );
-                const weight = 1 / (1 + position.distance / 25);
-                directionScores.set(
-                    direction,
-                    (directionScores.get(direction) || 0) + weight
-                );
+                if (
+                    position.distance <= detectionRadiusMiles &&
+                    position.distance < nearestDistance
+                ) {
+                    nearestDistance = position.distance;
+                    nearestPosition = position;
+                }
             }
         }
 
-        const sortedDirections = [...directionScores.entries()]
-            .sort((a, b) => b[1] - a[1]);
-        let dominantDirection = sortedDirections[0]?.[0] || "HERE";
-
-        if (sortedDirections.length > 1) {
-            const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
-            const [primaryDirection, primaryScore] = sortedDirections[0];
-            const [secondaryDirection, secondaryScore] = sortedDirections[1];
-            const primaryIndex = directions.indexOf(primaryDirection);
-            const secondaryIndex = directions.indexOf(secondaryDirection);
-            const sectorDifference = Math.min(
-                Math.abs(primaryIndex - secondaryIndex),
-                directions.length - Math.abs(primaryIndex - secondaryIndex)
-            );
-
-            if (
-                sectorDifference === 1 &&
-                secondaryScore >= primaryScore * 0.15
-            ) {
-                dominantDirection =
-                    `${primaryDirection}/${secondaryDirection}`;
-            }
-        }
+        const dominantDirection =
+            !nearestPosition || nearestDistance <= 2
+                ? "HERE"
+                : getCompassDirection(
+                    nearestPosition.eastMiles,
+                    nearestPosition.northMiles
+                );
 
         return {
             regions,
             nearbyRegions,
             nearestDistance,
+            nearestPosition,
             dominantDirection
         };
     }
@@ -522,7 +511,18 @@ async function updateRadarAwareness() {
                 continue;
             }
 
-            const score = centroidShift + Math.abs(Math.log(areaRatio)) * 5;
+            const currentStrongFraction =
+                currentRegion.strongPixelCount / currentRegion.area;
+            const pastStrongFraction =
+                pastRegion.strongPixelCount / pastRegion.area;
+            const strengthDifference =
+                Math.abs(currentStrongFraction - pastStrongFraction);
+            const score =
+                centroidShift +
+                Math.abs(Math.log(areaRatio)) * 5 +
+                strengthDifference * 12 -
+                Math.min(currentRegion.motionWeight, pastRegion.motionWeight) /
+                    10000;
             if (score < bestScore) {
                 bestScore = score;
                 bestMatch = { region: pastRegion, centroidShift, areaRatio };
