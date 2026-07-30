@@ -758,3 +758,14 @@ function calculateShootingScore(weather) {
 
 function getShootingDetails(weather) {
   const score = calculateShootingScore(weather);
+  const rating = getRating(score);
+  let status = rating.word;
+
+  if (score < 30) status = "Do Not Shoot";
+  else if (score < 65) status = "Use Caution";
+  else if (score >= 90) status = "Excellent";
+  else if (score >= 80) status = "Great";
+  else status = "Good";
+
+  return { score, stars: rating.stars, rating: status };
+}
