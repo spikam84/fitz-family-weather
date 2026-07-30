@@ -67,8 +67,7 @@ async function fetchWeatherData() {
     `https://api.open-meteo.com/v1/forecast?latitude=${WEATHER_LAT}&longitude=${WEATHER_LON}` +
     `&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,visibility` +
     `&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,visibility,precipitation_probability,cloud_cover,uv_index` +
-    `&daily=sunrise,sunset` +
-    `&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FChicago`;
+`&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset` +    `&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FChicago`;
 
   try {
     const response = await fetch(url);

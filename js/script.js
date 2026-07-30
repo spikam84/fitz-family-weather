@@ -75,6 +75,7 @@ updateKelseyUVIndex(data);
 updateHeatComfortCards(data);
 updateMicahMotorcycle(data);
 updateMomShooting(data);
+updateThreeDayForecast(data);
 updateDailyScores();
 } catch (error) {
   console.error("Weather failed to load", error);
@@ -397,6 +398,138 @@ function updateUVHighlight(data) {
 // Page Startup and Refresh
 // ----------------------------
 loadWeather();
+// ----------------------------
+// 3-Day Forecast
+// ----------------------------
+function updateThreeDayForecast(data) {
+  const daily = data.daily;
+
+  if (
+    !daily?.time ||
+    !daily?.weather_code ||
+    !daily?.temperature_2m_max ||
+    !daily?.temperature_2m_min ||
+    !daily?.precipitation_probability_max
+  ) {
+    return;
+  }
+
+  const dayLabels = ["Today", "Tomorrow"];
+
+  for (let day = 0; day < 3; day++) {
+    const cardNumber = day + 1;
+    const date = new Date(`${daily.time[day]}T12:00:00`);
+    const code = daily.weather_code[day];
+    const high = Math.round(daily.temperature_2m_max[day]);
+    const low = Math.round(daily.temperature_2m_min[day]);
+    const rain = Math.round(
+      daily.precipitation_probability_max[day] ?? 0
+    );
+
+    const dayName =
+      dayLabels[day] ||
+      date.toLocaleDateString([], {
+        weekday: "long"
+      });
+
+    let score = 5;
+
+    const stormCodes = [95, 96, 99];
+    const heavyRainCodes = [63, 65, 81, 82];
+    const snowOrIceCodes = [66, 67, 71, 73, 75, 77, 85, 86];
+
+    if (stormCodes.includes(code)) {
+      score = 1;
+    } else if (
+      heavyRainCodes.includes(code) ||
+      snowOrIceCodes.includes(code) ||
+      rain >= 70
+    ) {
+      score = 2;
+    } else if (rain >= 50) {
+      score = 3;
+    } else if (rain >= 30 || high >= 95 || high <= 35) {
+      score = 4;
+    }
+
+    let bestActivity = "Outdoor activities";
+
+    if (stormCodes.includes(code) || rain >= 70) {
+      bestActivity = "Indoor plans";
+    } else if (high >= 90) {
+      bestActivity = "Early morning walk";
+    } else if (high <= 40) {
+      bestActivity = "Midday walk";
+    } else if (rain >= 40) {
+      bestActivity = "Morning walk";
+    } else if (rain <= 20 && high >= 65 && high <= 85) {
+      bestActivity = "Boating or gardening";
+    }
+
+    document.getElementById(`forecast-day-${cardNumber}`).textContent =
+      dayName;
+
+    document.getElementById(`forecast-icon-${cardNumber}`).textContent =
+      WEATHER_ICONS[code] || "🌤️";
+
+    document.getElementById(
+      `forecast-condition-${cardNumber}`
+    ).textContent =
+      WEATHER_CODES[code] || "Forecast available";
+
+    document.getElementById(`forecast-high-${cardNumber}`).textContent =
+      `${high}°`;
+
+    document.getElementById(`forecast-low-${cardNumber}`).textContent =
+      `${low}°`;
+
+    document.getElementById(`forecast-rain-${cardNumber}`).textContent =
+      `💧 Rain: ${rain}%`;
+
+    document.getElementById(`forecast-stars-${cardNumber}`).innerHTML =
+  `<span class="filled-stars">${"★".repeat(score)}</span>` +
+  `<span class="empty-stars">${"★".repeat(5 - score)}</span>`;
+
+    document.getElementById(
+      `forecast-activity-${cardNumber}`
+    ).textContent =
+      `Best: ${bestActivity}`;
+  }
+    const rainChances =
+    daily.precipitation_probability_max.slice(0, 3);
+
+  const highs =
+    daily.temperature_2m_max.slice(0, 3);
+
+  const wetDays =
+    rainChances.filter(chance => (chance ?? 0) >= 50).length;
+
+  const hottestHigh =
+    Math.round(Math.max(...highs));
+
+  let summary =
+    "A generally pleasant three-day outlook for outdoor activities.";
+
+  if (wetDays === 3) {
+    summary =
+      "Rain is likely throughout the next three days, so keep indoor plans ready.";
+  } else if (wetDays === 2) {
+    summary =
+      "Several rainy periods are possible, with limited outdoor opportunities.";
+  } else if (wetDays === 1) {
+    summary =
+      "Mostly usable weather with one wetter day in the three-day outlook.";
+  } else if (hottestHigh >= 95) {
+    summary =
+      "Mostly dry, but dangerous heat may limit afternoon outdoor activities.";
+  } else if (hottestHigh >= 88) {
+    summary =
+      "Mostly dry with warmer afternoons—mornings and evenings will be most comfortable.";
+  }
+
+  document.getElementById("forecast-summary").textContent =
+    summary;
+}
 // ----------------------------
 // Dad Storm Watching
 // ----------------------------
