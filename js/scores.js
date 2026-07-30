@@ -4,7 +4,12 @@
 // It also watches for live score updates made by the page scripts.
 // ----------------------------
 function styleStarRating(element) {
-  if (!element || element.querySelector?.(".filled-stars, .empty-stars")) return;
+  if (
+    !element ||
+    element.nodeType !== Node.ELEMENT_NODE ||
+    element.children.length > 0 ||
+    element.querySelector?.(".filled-stars, .empty-stars")
+  ) return;
 
   const match = element.textContent.trim().match(/^([★☆]{5})(.*)$/s);
   if (!match) return;
