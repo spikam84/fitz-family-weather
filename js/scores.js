@@ -1,3 +1,73 @@
+// ----------------------------
+// Shared Star Display
+// Converts every five-star rating to yellow filled stars and gray remaining stars.
+// It also watches for live score updates made by the page scripts.
+// ----------------------------
+function styleStarRating(element) {
+  if (!element || element.querySelector?.(".filled-stars, .empty-stars")) return;
+
+  const match = element.textContent.trim().match(/^([★☆]{5})(.*)$/s);
+  if (!match) return;
+
+  const stars = match[1];
+  const suffix = match[2];
+  const filledCount = [...stars].filter(star => star === "★").length;
+
+  element.textContent = "";
+  element.classList.add("star-rating");
+  element.setAttribute(
+    "aria-label",
+    `${filledCount} out of 5 stars${suffix.trim() ? ` ${suffix.trim()}` : ""}`
+  );
+
+  const filled = document.createElement("span");
+  filled.className = "filled-stars";
+  filled.textContent = "★".repeat(filledCount);
+
+  const empty = document.createElement("span");
+  empty.className = "empty-stars";
+  empty.textContent = "★".repeat(5 - filledCount);
+
+  element.append(filled, empty);
+
+  if (suffix) {
+    element.append(document.createTextNode(suffix));
+  }
+}
+
+function styleAllStarRatings(root = document) {
+  const elements = root.querySelectorAll?.("*") || [];
+  elements.forEach(styleStarRating);
+}
+
+function startStarRatingObserver() {
+  styleAllStarRatings();
+
+  const observer = new MutationObserver(mutations => {
+    mutations.forEach(mutation => {
+      styleStarRating(mutation.target);
+
+      mutation.addedNodes.forEach(node => {
+        if (node.nodeType !== Node.ELEMENT_NODE) return;
+        styleStarRating(node);
+        styleAllStarRatings(node);
+      });
+    });
+  });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+    characterData: true
+  });
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", startStarRatingObserver);
+} else {
+  startStarRatingObserver();
+}
+
 function getRating(score) {
   if (score >= 90) {
     return { stars: "★★★★★", word: "Perfect", message: "Excellent outdoor day!" };
@@ -688,14 +758,3 @@ function calculateShootingScore(weather) {
 
 function getShootingDetails(weather) {
   const score = calculateShootingScore(weather);
-  const rating = getRating(score);
-  let status = rating.word;
-
-  if (score < 30) status = "Do Not Shoot";
-  else if (score < 65) status = "Use Caution";
-  else if (score >= 90) status = "Excellent";
-  else if (score >= 80) status = "Great";
-  else status = "Good";
-
-  return { score, stars: rating.stars, rating: status };
-}
