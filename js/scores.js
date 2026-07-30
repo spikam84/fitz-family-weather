@@ -48,23 +48,47 @@ function styleAllStarRatings(root = document) {
 function startStarRatingObserver() {
   styleAllStarRatings();
 
-  const observer = new MutationObserver(mutations => {
-    mutations.forEach(mutation => {
-      styleStarRating(mutation.target);
-
-      mutation.addedNodes.forEach(node => {
-        if (node.nodeType !== Node.ELEMENT_NODE) return;
-        styleStarRating(node);
-        styleAllStarRatings(node);
-      });
-    });
-  });
-
-  observer.observe(document.body, {
+  const observerOptions = {
     childList: true,
     subtree: true,
     characterData: true
+  };
+
+  const observer = new MutationObserver(mutations => {
+    // Pause observation while star markup is changed so the formatter
+    // cannot react to its own DOM updates and create an endless loop.
+    observer.disconnect();
+
+    const elementsToCheck = new Set();
+
+    mutations.forEach(mutation => {
+      const target =
+        mutation.target.nodeType === Node.ELEMENT_NODE
+          ? mutation.target
+          : mutation.target.parentElement;
+
+      if (target) elementsToCheck.add(target);
+
+      mutation.addedNodes.forEach(node => {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          elementsToCheck.add(node);
+        }
+      });
+    });
+
+    elementsToCheck.forEach(element => {
+      styleStarRating(element);
+
+      if (!element.classList.contains("star-rating")) {
+        styleAllStarRatings(element);
+      }
+    });
+
+    observer.takeRecords();
+    observer.observe(document.body, observerOptions);
   });
+
+  observer.observe(document.body, observerOptions);
 }
 
 if (document.readyState === "loading") {
