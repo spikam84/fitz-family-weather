@@ -1533,3 +1533,75 @@ body.menu-open {
 .star-rating {
   letter-spacing: 1px;
 }
+
+
+/* ----------------------------
+   Live Storm Coverage
+---------------------------- */
+.storm-channel-list {
+  display: grid;
+  gap: 10px;
+}
+
+.storm-channel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .035);
+}
+
+.storm-channel strong,
+.storm-channel span {
+  display: block;
+}
+
+.storm-channel strong {
+  font-size: 18px;
+}
+
+.storm-channel span {
+  margin-top: 3px;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.storm-channel a {
+  flex-shrink: 0;
+  min-width: 92px;
+  padding: 10px 14px;
+  border: 1px solid var(--red);
+  border-radius: 11px;
+  color: #fff;
+  background: rgba(255, 77, 90, .12);
+  text-align: center;
+  text-decoration: none;
+  font-weight: 900;
+}
+
+.storm-channel a:hover,
+.storm-channel a:focus-visible {
+  background: var(--red);
+  outline: none;
+}
+
+.storm-coverage-note {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+@media (max-width: 520px) {
+  .storm-channel {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .storm-channel a {
+    width: 100%;
+  }
+}
