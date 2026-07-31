@@ -1559,6 +1559,23 @@ body.menu-open {
   display: block;
 }
 
+.storm-channel-info {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 14px;
+}
+
+.storm-channel-image {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  border: 2px solid rgba(255, 255, 255, .2);
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .3);
+}
+
 .storm-channel strong {
   font-size: 18px;
 }
@@ -1603,5 +1620,11 @@ body.menu-open {
 
   .storm-channel a {
     width: 100%;
+  }
+
+  .storm-channel-image {
+    width: 48px;
+    height: 48px;
+    flex-basis: 48px;
   }
 }
