@@ -97,11 +97,19 @@ document.getElementById("storm-status-message").textContent = message;
 
 document.getElementById("storm-last-updated").textContent =
     formatStormTime(new Date());
-    
+
+const nextHour = hourly.time
+  .map((time, index) => ({ time: new Date(time), index }))
+  .find(item => item.time >= now);
+
+const rainChance = nextHour
+  ? hourly.precipitation_probability?.[nextHour.index] ?? 0
+  : 0;
+
 updateStormWatching({
   word: word,
   code: current.weather_code,
-  rainChance: hourly.precipitation_probability?.[0] ?? 0,
+  rainChance,
   wind: current.wind_speed_10m
 });
 
