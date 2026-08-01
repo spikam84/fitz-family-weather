@@ -200,6 +200,8 @@ async function updateRadarAwareness() {
     const centerLon = -90.5157;
     const detectionRadiusMiles = 50;
     const imageRadiusMiles = 60;
+    const quadCitiesCoreRadiusMiles = 4;
+    const minimumCoreEchoPixels = 12;
     const imageSize = 256;
     const radarIntervalMinutes = 15;
     const milesPerLatitudeDegree = 69;
@@ -470,6 +472,7 @@ async function updateRadarAwareness() {
         );
         let nearestDistance = Infinity;
         let nearestPosition = null;
+        let coreEchoPixels = 0;
 
         // Distance and direction both come from the closest valid echo. This keeps
         // a larger, more distant rain band from overriding precipitation nearer to
@@ -477,6 +480,9 @@ async function updateRadarAwareness() {
         for (const region of nearbyRegions) {
             for (const index of region.pixels) {
                 const position = pixelPosition(index);
+                if (position.distance <= quadCitiesCoreRadiusMiles) {
+                    coreEchoPixels += 1;
+                }
                 if (
                     position.distance <= detectionRadiusMiles &&
                     position.distance < nearestDistance
@@ -487,8 +493,14 @@ async function updateRadarAwareness() {
             }
         }
 
+        // A single weak pixel or the edge of a nearby rain band should not be
+        // described as rain over the Quad Cities. Require a small, coherent
+        // footprint across the local core before using the "over the area" label.
+        const precipitationOverArea =
+            coreEchoPixels >= minimumCoreEchoPixels;
+
         const dominantDirection =
-            !nearestPosition || nearestDistance <= 2
+            !nearestPosition || precipitationOverArea
                 ? "HERE"
                 : getCompassDirection(
                     nearestPosition.eastMiles,
@@ -500,6 +512,7 @@ async function updateRadarAwareness() {
             nearbyRegions,
             nearestDistance,
             nearestPosition,
+            precipitationOverArea,
             dominantDirection
         };
     }
@@ -663,7 +676,7 @@ async function updateRadarAwareness() {
 
         status.textContent = "Nearby precipitation detected";
 
-        if (nearestMiles <= 2) {
+        if (currentAnalysis.precipitationOverArea) {
             distance.textContent = "Over the Quad Cities";
             movement.textContent = "Over the area now";
             eta.textContent = "Already here";
