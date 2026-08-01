@@ -201,7 +201,7 @@ async function updateRadarAwareness() {
     const detectionRadiusMiles = 50;
     const imageRadiusMiles = 60;
     const quadCitiesCoreRadiusMiles = 4;
-    const minimumCoreEchoPixels = 12;
+    // Roughly 225 radar pixels cover the four-mile local core. Require about\n    // one-quarter of that area before saying precipitation is over the Quad\n    // Cities; smaller weak patches are treated as nearby echoes or clutter.\n    const minimumCoreEchoPixels = 56;
     const imageSize = 256;
     const radarIntervalMinutes = 15;
     const milesPerLatitudeDegree = 69;
