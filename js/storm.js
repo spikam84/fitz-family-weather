@@ -205,6 +205,37 @@ async function updateRadarAwareness() {
     // from different parts of the Quad Cities into one local-rain result.
     const quadCitiesCoreRadiusMiles = 1.5;
     const minimumCoreEchoPixels = 18;
+
+    // Radar imagery can contain weak echoes or timing differences at a single
+    // location. Only say rain is already here when the local weather observation
+    // also reports precipitation at Bettendorf.
+    let localPrecipitationObserved = false;
+    try {
+        const cachedWeather = JSON.parse(
+            localStorage.getItem("cachedWeather") || "null"
+        );
+        const localCurrent = cachedWeather?.current || {};
+        const localWeatherCode = Number(localCurrent.weather_code);
+        const localPrecipitation = Math.max(
+            Number(localCurrent.precipitation) || 0,
+            Number(localCurrent.rain) || 0,
+            Number(localCurrent.showers) || 0
+        );
+        const precipitationWeatherCodes = [
+            51, 53, 55, 56, 57,
+            61, 63, 65, 66, 67,
+            71, 73, 75, 77,
+            80, 81, 82, 85, 86,
+            95, 96, 99
+        ];
+
+        localPrecipitationObserved =
+            localPrecipitation > 0 ||
+            precipitationWeatherCodes.includes(localWeatherCode);
+    } catch (error) {
+        console.warn("Unable to read local precipitation observation:", error);
+    }
+
     const imageSize = 256;
     const radarIntervalMinutes = 15;
     const milesPerLatitudeDegree = 69;
@@ -500,7 +531,8 @@ async function updateRadarAwareness() {
         // described as rain over the Quad Cities. Require a small, coherent
         // footprint across the local core before using the "over the area" label.
         const precipitationOverArea =
-            coreEchoPixels >= minimumCoreEchoPixels;
+            coreEchoPixels >= minimumCoreEchoPixels &&
+            localPrecipitationObserved;
 
         const dominantDirection =
             !nearestPosition || precipitationOverArea
