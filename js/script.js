@@ -305,28 +305,39 @@ function updateStormHighlight(data) {
       return item.time >= now && hour >= 18 && hour <= 23;
     });
 
-  let title = "Storms Not Expected";
+  const stormCodes = [95, 96, 99];
+  const rainCodes = [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82];
+
+  const thunderstormsExpected = tonight.some(hour =>
+    stormCodes.includes(hourly.weather_code[hour.index])
+  );
+
+  const highestRainChance = tonight.length
+    ? Math.max(
+        ...tonight.map(hour =>
+          hourly.precipitation_probability[hour.index] ?? 0
+        )
+      )
+    : 0;
+
+  const rainExpected = tonight.some(hour =>
+    rainCodes.includes(hourly.weather_code[hour.index])
+  );
+
+  let title = "No Thunderstorms Expected";
   let message = "Quiet through the evening";
   let icon = "⛈️";
 
-  for (const hour of tonight) {
-    const code = hourly.weather_code[hour.index];
-    const rain = hourly.precipitation_probability[hour.index];
-
-    // Thunderstorms
-    if ([95, 96, 99].includes(code)) {
-      title = "Storm Risk";
-      message = "Storms possible this evening";
-      icon = "🌩️";
-      break;
-    }
-
-    // Heavy rain
-    if (rain >= 60) {
-      title = "Storms Possible";
-      message = "Keep an eye on the radar";
-      icon = "🌧️";
-    }
+  if (thunderstormsExpected) {
+    title = "Storm Risk";
+    message = "Storms possible this evening";
+    icon = "🌩️";
+  } else if (rainExpected || highestRainChance >= 60) {
+    message = "Rain likely through the evening";
+    icon = "🌧️";
+  } else if (highestRainChance >= 30) {
+    message = "Rain possible this evening";
+    icon = "🌦️";
   }
 
   document.getElementById("storm-title").textContent = title;
