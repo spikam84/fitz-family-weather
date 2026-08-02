@@ -261,6 +261,10 @@ main {
 .watch {
   color: var(--gold)
 }
+
+#storm-message {
+  color: #c9c3dc
+}
 /* ----------------------------
    Family Cards
 ---------------------------- */
