@@ -362,24 +362,20 @@ async function updateRadarAwareness() {
             const insideRadarArea =
                 pixelPosition(index).distance <= imageRadiusMiles;
 
-            // NOAA's reflectivity ramp begins with blue/green shades for weak
-            // echoes, followed by yellow/red shades for stronger precipitation.
-            // Alpha marks raster coverage rather than precipitation, so require a
-            // recognizable ramp color and let the coherence checks below remove
-            // isolated light-return clutter.
-            const isWeakBlueEcho =
-                blue >= 45 &&
-                blue >= red + 20 &&
-                blue >= green * 0.85;
-            const isWeakGreenEcho =
-                green >= 45 &&
-                green >= red + 18 &&
-                green >= blue * 0.75;
+            // Ignore the blue/gray clear-air portion of NOAA's reflectivity
+            // palette. Count only saturated green or warmer returns that are
+            // consistent with meaningful precipitation.
+            const isRainGreenEcho =
+                green >= 80 &&
+                green >= red + 25 &&
+                green >= blue + 15;
             const isWarmEcho =
-                red >= 34 && blue <= 20;
+                red >= 100 &&
+                green >= 65 &&
+                blue <= 60;
             const isEchoColor =
                 alpha > 0 &&
-                (isWeakBlueEcho || isWeakGreenEcho || isWarmEcho);
+                (isRainGreenEcho || isWarmEcho);
             const isStrongEchoColor =
                 isEchoColor && red >= 230 && green <= 177 && blue <= 10;
 
@@ -389,7 +385,8 @@ async function updateRadarAwareness() {
             }
         }
 
-        // Keep small showers, but remove isolated one- and two-pixel artifacts.
+        // Require a dense local patch. This removes isolated green specks that
+        // can appear in clear-air mode without discarding a compact shower.
         for (let y = 0; y < imageSize; y += 1) {
             for (let x = 0; x < imageSize; x += 1) {
                 const index = y * imageSize + x;
@@ -409,7 +406,7 @@ async function updateRadarAwareness() {
                     }
                 }
 
-                if (neighbors >= 3) {
+                if (neighbors >= 5) {
                     mask[index] = 1;
                     strongMask[index] = strongCandidates[index];
                 }
@@ -471,10 +468,10 @@ async function updateRadarAwareness() {
                 }
             }
 
-            // Spatial coherence is the primary clutter filter. A compact light-rain
-            // area is valid even when it has no yellow/red core; slightly larger
-            // minimum area is required for an all-weak region.
-            const minimumArea = strongPixelCount > 0 ? 20 : 32;
+            // A valid echo must cover a meaningful area. Strong cells can be
+            // smaller; green-only returns need a larger footprint so scattered
+            // clutter is not reported as nearby rain.
+            const minimumArea = strongPixelCount > 0 ? 24 : 48;
             if (pixels.length >= minimumArea) {
                 regions.push({
                     pixels,
