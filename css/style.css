@@ -1514,25 +1514,67 @@ body.menu-open {
 .empty-stars {
   color: #8fa6ba;
 }
+.forecast-outlook {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  align-items: center;
+  margin: 14px 0 12px;
+  padding: 18px 20px;
+  background: linear-gradient(135deg, rgba(30, 76, 119, .78), rgba(12, 36, 62, .92));
+  border: 1px solid rgba(95, 166, 224, .5);
+  border-left: 5px solid #72b9ef;
+  border-radius: 14px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, .22);
+}
+
+.forecast-outlook-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 13px;
+  background: rgba(114, 185, 239, .14);
+  font-size: 1.7rem;
+}
+
+.forecast-outlook-label {
+  display: block;
+  margin-bottom: 5px;
+  color: #9ed2f7;
+  font-size: .78rem;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
 .forecast-summary {
-  margin: -2px 0 12px;
-  padding: 10px 14px 10px 40px;
-  position: relative;
-  color: #d8ecff;
-  background: rgba(47, 111, 168, 0.22);
-  border: 1px solid rgba(95, 166, 224, 0.45);
-  border-radius: 10px;
-  font-size: 0.95rem;
+  margin: 0;
+  color: #f4f8ff;
+  font-size: 1.05rem;
+  font-weight: 800;
   line-height: 1.4;
 }
 
-.forecast-summary::before {
-  content: "📅";
-  position: absolute;
-  left: 13px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 1.1rem;
+.forecast-outlook-note {
+  margin: 5px 0 0;
+  color: #b9cee0;
+  font-size: .88rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 520px) {
+  .forecast-outlook {
+    grid-template-columns: 40px 1fr;
+    gap: 12px;
+    padding: 15px;
+  }
+
+  .forecast-outlook-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.4rem;
+  }
 }
 .star-rating {
   letter-spacing: 1px;
