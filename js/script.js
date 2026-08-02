@@ -333,7 +333,7 @@ function updateStormHighlight(data) {
     message = "Storms possible this evening";
     icon = "🌩️";
   } else if (rainExpected || highestRainChance >= 60) {
-    message = "Rain likely through the evening";
+    message = "Rain likely tonight";
     icon = "🌧️";
   } else if (highestRainChance >= 30) {
     message = "Rain possible this evening";
