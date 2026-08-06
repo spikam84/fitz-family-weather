@@ -370,17 +370,21 @@ function updateFireworksHighlight() {
   highlightMessage.textContent = messageElement.textContent;
 }
 
+// ----------------------------
+// UV Highlight
+// Uses the live hourly forecast for both the UV level and protection timing.
+// ----------------------------
 function updateUVHighlight(data) {
   const hourly = data.hourly;
   const now = new Date();
-// ----------------------------
-// UV Highlight
-// ----------------------------
+
   const todayHours = hourly.time
     .map((time, index) => ({ time: new Date(time), index }))
-    .filter(item => {
-      return item.time >= now && item.time.getHours() >= 10 && item.time.getHours() <= 16;
-    });
+    .filter(item =>
+      item.time.toDateString() === now.toDateString() &&
+      item.time.getHours() >= 10 &&
+      item.time.getHours() <= 16
+    );
 
   if (todayHours.length === 0) return;
 
@@ -388,18 +392,35 @@ function updateUVHighlight(data) {
     ...todayHours.map(item => hourly.uv_index[item.index] ?? 0)
   );
 
+  const highUVHours = todayHours.filter(
+    item => (hourly.uv_index[item.index] ?? 0) >= 6
+  );
+
   let title = "UV Low";
   let message = "Low UV risk today";
 
   if (maxUV >= 8) {
     title = "UV Very High";
-    message = "Use sun protection";
   } else if (maxUV >= 6) {
     title = "UV High";
-    message = "Use sun protection after 11 AM";
   } else if (maxUV >= 3) {
     title = "UV Moderate";
     message = "Some sun protection recommended";
+  }
+
+  if (highUVHours.length > 0) {
+    const highUVStart = highUVHours[0].time;
+    const highUVEnd = new Date(
+      highUVHours[highUVHours.length - 1].time.getTime() + 60 * 60 * 1000
+    );
+
+    if (now < highUVStart) {
+      message = `Use sun protection after ${formatTime(highUVStart)}`;
+    } else if (now < highUVEnd) {
+      message = "Use sun protection now";
+    } else {
+      message = "High UV period has ended";
+    }
   }
 
   document.getElementById("uv-title").textContent = title;
