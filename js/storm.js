@@ -751,60 +751,16 @@ async function updateWarnings() {
     box.style.borderLeft = "6px solid #808080";
 
     try {
-        const quadCitiesAreas = [
-            "Scott",
-            "Rock Island",
-            "Muscatine",
-            "Clinton",
-            "Henry",
-            "Mercer",
-            "Louisa"
-        ];
+        if (typeof fetchLocalFitzAlerts !== "function") {
+            throw new Error("Shared NWS alert engine is unavailable.");
+        }
 
-        const [iowaResponse, illinoisResponse] = await Promise.all([
-            fetch("https://api.weather.gov/alerts/active?area=IA"),
-            fetch("https://api.weather.gov/alerts/active?area=IL")
-        ]);
-
-        if (!iowaResponse.ok || !illinoisResponse.ok) {
+        const alertResult = await fetchLocalFitzAlerts();
+        if (alertResult.source === "unavailable") {
             throw new Error("NWS alert request failed.");
         }
 
-        const iowaData = await iowaResponse.json();
-        const illinoisData = await illinoisResponse.json();
-
-const iowaAlerts = (iowaData.features || []).map(alert => ({
-    ...alert,
-    sourceState: "IA"
-}));
-
-const illinoisAlerts = (illinoisData.features || []).map(alert => ({
-    ...alert,
-    sourceState: "IL"
-}));
-
-const allAlerts = [
-    ...iowaAlerts,
-    ...illinoisAlerts
-];
-
-const quadCitiesCounties = {
-    IA: ["Scott", "Muscatine", "Clinton", "Louisa"],
-    IL: ["Rock Island", "Henry", "Mercer"]
-};
-
-const localAlerts = allAlerts.filter(alert => {
-    const areaNames = (alert.properties.areaDesc || "")
-        .split(";")
-        .map(area => area.trim());
-
-    const allowedCounties =
-        quadCitiesCounties[alert.sourceState] || [];
-
-    return areaNames.some(area =>
-        allowedCounties.includes(area)
-    );
-});
+        const localAlerts = alertResult.alerts;
 
 
         if (activeWatches) {
