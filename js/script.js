@@ -1046,53 +1046,10 @@ function updateKelsey6AMWalk(data) {
 // Both cards use the same shared six-hour boating result.
 // ----------------------------
 function updateBoatingCards(data) {
-  if (!data?.current || !data?.hourly?.time) return;
+  const forecast = getBoatingForecast(data);
+  if (!forecast) return;
 
-  const now = new Date();
-  const cutoff = new Date(now.getTime() + 6 * 60 * 60 * 1000);
-  const upcoming = data.hourly.time
-    .map((time, index) => ({ time: new Date(time), index }))
-    .filter(item => item.time >= now && item.time <= cutoff);
-
-  const current = data.current;
-  const hourly = data.hourly;
-
-  const weather = {
-    feelsLike: upcoming.length
-      ? Math.max(
-          current.apparent_temperature,
-          ...upcoming.map(item => hourly.apparent_temperature[item.index] ?? current.apparent_temperature)
-        )
-      : current.apparent_temperature,
-    wind: upcoming.length
-      ? Math.max(
-          current.wind_speed_10m,
-          ...upcoming.map(item => hourly.wind_speed_10m[item.index] ?? 0)
-        )
-      : current.wind_speed_10m,
-    gusts: upcoming.length
-      ? Math.max(
-          current.wind_gusts_10m ?? current.wind_speed_10m,
-          ...upcoming.map(item => hourly.wind_gusts_10m[item.index] ?? 0)
-        )
-      : current.wind_gusts_10m ?? current.wind_speed_10m,
-    visibility: upcoming.length
-      ? Math.min(
-          current.visibility ?? 16093,
-          ...upcoming.map(item => hourly.visibility[item.index] ?? 16093)
-        )
-      : current.visibility ?? 16093,
-    rainChance: upcoming.length
-      ? Math.max(...upcoming.map(item => hourly.precipitation_probability[item.index] ?? 0))
-      : 0,
-    code: current.weather_code,
-    forecastCodes: [
-      current.weather_code,
-      ...upcoming.map(item => hourly.weather_code[item.index])
-    ]
-  };
-
-  const details = getBoatingDetails(weather);
+  const details = getBoatingDetails(forecast.weather);
   const cards = [
     ["dad-boating-stars", "dad-boating-rating"],
     ["mom-boating-stars", "mom-boating-rating"]
