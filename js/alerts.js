@@ -22,6 +22,86 @@ function isLocalFitzAlert(alert) {
     .some(area => allowed.includes(area));
 }
 
+function getNwsWatchNumber(alert) {
+  const details = alert.properties || {};
+  const searchableText = [
+    details.event,
+    details.headline,
+    details.description,
+    details.parameters?.VTEC?.join(" ")
+  ].filter(Boolean).join(" ");
+
+  const match = searchableText.match(/\bwatch\s+(\d+)\b/i);
+  return match ? match[1] : null;
+}
+
+function getLocalAlertAreas(alert) {
+  const allowed = FITZ_ALERT_COUNTIES[alert.sourceState] || [];
+
+  return (alert.properties?.areaDesc || "")
+    .split(";")
+    .map(area => ({
+      normalized: normalizeAlertArea(area),
+      display: area.trim()
+    }))
+    .filter(area => allowed.includes(area.normalized));
+}
+
+function consolidateFitzAlerts(alerts) {
+  const consolidated = new Map();
+
+  alerts.forEach(alert => {
+    const details = alert.properties || {};
+    const watchNumber = /watch/i.test(details.event || "")
+      ? getNwsWatchNumber(alert)
+      : null;
+    const key = watchNumber
+      ? [
+          (details.event || "Weather Watch").toLowerCase(),
+          watchNumber,
+          details.expires || details.ends || ""
+        ].join("|")
+      : alert.id || [
+          details.event || "Weather Alert",
+          details.areaDesc || "",
+          details.expires || details.ends || ""
+        ].join("|");
+
+    if (!consolidated.has(key)) {
+      const localAreas = getLocalAlertAreas(alert);
+      consolidated.set(key, {
+        ...alert,
+        properties: {
+          ...details,
+          areaDesc: localAreas.map(area => area.display).join("; "),
+          fitzWatchNumber: watchNumber
+        },
+        fitzLocalAreas: localAreas
+      });
+      return;
+    }
+
+    const existing = consolidated.get(key);
+    const combinedAreas = [
+      ...(existing.fitzLocalAreas || []),
+      ...getLocalAlertAreas(alert)
+    ];
+    const uniqueAreas = [...new Map(
+      combinedAreas.map(area => [
+        `${area.normalized}|${area.display.split(",").pop()?.trim() || ""}`,
+        area
+      ])
+    ).values()];
+
+    existing.fitzLocalAreas = uniqueAreas;
+    existing.properties.areaDesc = uniqueAreas
+      .map(area => area.display)
+      .join("; ");
+  });
+
+  return [...consolidated.values()];
+}
+
 async function fetchLocalFitzAlerts() {
   try {
     const responses = await Promise.all([
@@ -42,17 +122,18 @@ async function fetchLocalFitzAlerts() {
       ...(illinoisData.features || []).map(alert => ({ ...alert, sourceState: "IL" }))
     ].filter(isLocalFitzAlert);
 
-    const uniqueAlerts = [...new Map(
+    const exactAlerts = [...new Map(
       alerts.map(alert => [
         alert.id || `${alert.properties?.event}-${alert.properties?.areaDesc}`,
         alert
       ])
     ).values()];
+    const consolidatedAlerts = consolidateFitzAlerts(exactAlerts);
 
-    localStorage.setItem(FITZ_ALERT_CACHE_KEY, JSON.stringify(uniqueAlerts));
+    localStorage.setItem(FITZ_ALERT_CACHE_KEY, JSON.stringify(consolidatedAlerts));
     localStorage.setItem(FITZ_ALERT_CACHE_TIME_KEY, new Date().toISOString());
 
-    return { alerts: uniqueAlerts, source: "live", updatedAt: new Date() };
+    return { alerts: consolidatedAlerts, source: "live", updatedAt: new Date() };
   } catch (error) {
     console.error("Unable to load NWS alerts:", error);
     const cached = localStorage.getItem(FITZ_ALERT_CACHE_KEY);
