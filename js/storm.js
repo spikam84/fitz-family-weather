@@ -243,33 +243,38 @@ async function updateRadarAwareness() {
         69 * Math.cos(centerLat * Math.PI / 180);
     const latitudeRadius = imageRadiusMiles / milesPerLatitudeDegree;
     const longitudeRadius = imageRadiusMiles / milesPerLongitudeDegree;
+    // Use the local Davenport/KDVN radar feed. The national MRMS ImageServer
+    // can occasionally lag well behind radar.weather.gov, which previously let
+    // an old clear frame appear as a current "No precipitation detected" result.
     const radarService =
-        "https://mapservices.weather.noaa.gov/eventdriven/rest/services/radar/radar_base_reflectivity_time/ImageServer/exportImage";
+        "https://opengeo.ncep.noaa.gov/geoserver/kdvn/ows";
 
     function buildRadarImageUrl(radarTime = null) {
         const params = new URLSearchParams({
+            service: "WMS",
+            version: "1.1.1",
+            request: "GetMap",
+            layers: "kdvn_sr_bref",
+            styles: "radar_reflectivity",
+            srs: "EPSG:4326",
             bbox: [
                 centerLon - longitudeRadius,
                 centerLat - latitudeRadius,
                 centerLon + longitudeRadius,
                 centerLat + latitudeRadius
             ].join(","),
-            bboxSR: "4326",
-            imageSR: "4326",
-            size: `${imageSize},${imageSize}`,
-            adjustAspectRatio: "false",
-            format: "png32",
-            interpolation: "RSP_NearestNeighbor",
-            f: "image"
+            width: imageSize.toString(),
+            height: imageSize.toString(),
+            format: "image/png",
+            transparent: "true"
         });
 
         if (radarTime !== null) {
-            params.set("time", radarTime.toString());
-        } else {
-            // NOAA exports can be cached for hours. A five-minute URL bucket keeps
-            // the latest frame current while still allowing short-term caching.
-            params.set("_", Math.floor(Date.now() / (5 * 60 * 1000)).toString());
+            params.set("time", new Date(radarTime).toISOString());
         }
+
+        // Keep browsers and intermediary caches from holding an old radar frame.
+        params.set("_", Math.floor(Date.now() / (2 * 60 * 1000)).toString());
 
         return `${radarService}?${params.toString()}`;
     }
