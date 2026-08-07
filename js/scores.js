@@ -532,6 +532,71 @@ function getGrillingDetails(weather) {
 }
 
 // ----------------------------
+// Shared Boating Forecast Window
+// Used by both the dashboard cards and the Boating Center.
+// Scores the next usable daylight period (up to 6 hours) and rolls
+// to tomorrow at sunrise after today's sunset.
+// ----------------------------
+function getBoatingForecast(data, now = new Date()) {
+  if (!data?.current || !data?.hourly?.time) return null;
+
+  const periods = (data.daily?.sunrise || []).map((sunrise, index) => ({
+    sunrise: new Date(sunrise),
+    sunset: new Date(data.daily?.sunset?.[index])
+  })).filter(period =>
+    !Number.isNaN(period.sunrise.getTime()) &&
+    !Number.isNaN(period.sunset.getTime()) &&
+    period.sunset > now
+  );
+
+  const period = periods[0];
+  if (!period) return null;
+
+  const start = now < period.sunrise ? period.sunrise : now;
+  const end = new Date(Math.min(
+    start.getTime() + 6 * 60 * 60 * 1000,
+    period.sunset.getTime()
+  ));
+  const items = data.hourly.time
+    .map((time, index) => ({ time: new Date(time), index }))
+    .filter(item => item.time >= start && item.time <= end);
+
+  if (!items.length) return null;
+
+  const includeCurrent = start.getTime() === now.getTime();
+  const current = data.current;
+  const hourly = data.hourly;
+  const values = (field, fallback) =>
+    items.map(item => hourly[field]?.[item.index] ?? fallback);
+  const currentValue = value => includeCurrent ? [value] : [];
+  const feels = [
+    ...currentValue(current.apparent_temperature),
+    ...values("apparent_temperature", current.apparent_temperature)
+  ];
+
+  return {
+    start,
+    end,
+    sunrise: period.sunrise,
+    sunset: period.sunset,
+    rolledToNextDay: period.sunrise.toDateString() !== now.toDateString(),
+    items,
+    weather: {
+      feelsLike: Math.max(...feels),
+      wind: Math.max(...currentValue(current.wind_speed_10m), ...values("wind_speed_10m", 0)),
+      gusts: Math.max(...currentValue(current.wind_gusts_10m ?? current.wind_speed_10m), ...values("wind_gusts_10m", 0)),
+      visibility: Math.min(...currentValue(current.visibility ?? 16093), ...values("visibility", 16093)),
+      rainChance: Math.max(0, ...values("precipitation_probability", 0)),
+      code: includeCurrent ? current.weather_code : hourly.weather_code[items[0].index],
+      forecastCodes: [
+        ...currentValue(current.weather_code),
+        ...values("weather_code", current.weather_code)
+      ]
+    }
+  };
+}
+
+// ----------------------------
 // Boating Score
 // Shared by Dad and Mom for the same boat.
 // Looks ahead 6 hours and prioritizes water safety.
