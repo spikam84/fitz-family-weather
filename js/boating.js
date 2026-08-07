@@ -100,6 +100,9 @@ async function loadBoating() {
     const details = getBoatingDetails(weather);
     const state = boatingStatusClass(details.score);
 
+    document.getElementById("boating-window-label").textContent =
+      `${forecast.dayLabel} · Next 6 Daylight Hours`;
+    document.getElementById("best-window-day").textContent = forecast.dayLabel;
     document.getElementById("boating-status").textContent = details.rating;
     document.getElementById("boating-stars").textContent = details.stars;
     document.getElementById("boating-score").textContent = details.score;
