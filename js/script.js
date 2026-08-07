@@ -1061,7 +1061,9 @@ function updateBoatingCards(data) {
     if (!stars || !rating) return;
 
     stars.textContent = details.stars;
-    rating.textContent = details.rating;
+    rating.textContent = forecast.rolledToNextDay
+      ? `${forecast.dayLabel} · ${details.rating}`
+      : details.rating;
   });
 }
 
