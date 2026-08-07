@@ -135,7 +135,8 @@ async function loadBoating() {
     const best = findBestWindow(data, items);
     if (best) {
       const start = best.group[0].item.time;
-      const end = new Date(best.group[best.group.length - 1].item.time.getTime() + 60 * 60 * 1000);
+      const lastHourEnd = best.group[best.group.length - 1].item.time.getTime() + 60 * 60 * 1000;
+      const end = new Date(Math.min(lastHourEnd, forecast.end.getTime()));
       const bestDetails = getBoatingDetails({ ...best.group[0].weather, forecastCodes: best.group.map(r => r.weather.code), wind: Math.max(...best.group.map(r => r.weather.wind)), gusts: Math.max(...best.group.map(r => r.weather.gusts)), visibility: Math.min(...best.group.map(r => r.weather.visibility)), rainChance: Math.max(...best.group.map(r => r.weather.rainChance)) });
       document.getElementById("best-window").textContent = `${formatBoatTime(start)}–${formatBoatTime(end)} · ${bestDetails.rating} · Average score ${best.score}/100`;
       document.getElementById("best-window-status").textContent = bestDetails.rating;
