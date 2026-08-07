@@ -580,6 +580,7 @@ function getBoatingForecast(data, now = new Date()) {
     sunrise: period.sunrise,
     sunset: period.sunset,
     rolledToNextDay: period.sunrise.toDateString() !== now.toDateString(),
+    dayLabel: period.sunrise.toDateString() !== now.toDateString() ? "Tomorrow" : "Today",
     items,
     weather: {
       feelsLike: Math.max(...feels),
