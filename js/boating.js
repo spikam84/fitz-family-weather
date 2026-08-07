@@ -85,52 +85,18 @@ function showUnavailable() {
   document.getElementById("boating-updated").textContent = "Weather service unavailable";
 }
 
-function getDaylightBoatingWindow(data, now) {
-  const sunrises = data.daily?.sunrise || [];
-  const sunsets = data.daily?.sunset || [];
-  const periods = sunrises.map((sunrise, index) => ({
-    sunrise: new Date(sunrise),
-    sunset: new Date(sunsets[index])
-  })).filter(period =>
-    !Number.isNaN(period.sunrise.getTime()) &&
-    !Number.isNaN(period.sunset.getTime()) &&
-    period.sunset > now
-  );
-
-  const period = periods[0];
-  if (!period) return null;
-
-  const start = now < period.sunrise ? period.sunrise : now;
-  const end = new Date(Math.min(
-    start.getTime() + 6 * 60 * 60 * 1000,
-    period.sunset.getTime()
-  ));
-
-  return {
-    start,
-    end,
-    sunrise: period.sunrise,
-    sunset: period.sunset,
-    rolledToNextDay: period.sunrise.toDateString() !== now.toDateString()
-  };
-}
-
 async function loadBoating() {
   try {
     const result = await getWeather();
     const data = result.raw;
     if (!data?.current || !data?.hourly?.time) throw new Error("No boating forecast available");
 
-    const now = new Date();
-    const daylight = getDaylightBoatingWindow(data, now);
-    if (!daylight) throw new Error("No daylight boating window available");
+    const forecast = getBoatingForecast(data);
+    if (!forecast) throw new Error("No daylight boating forecast available");
 
-    const items = data.hourly.time.map((time, index) => ({ time: new Date(time), index }))
-      .filter(item => item.time >= daylight.start && item.time <= daylight.end);
-    if (!items.length) throw new Error("No daylight boating forecast available");
-
-    const includeCurrent = daylight.start.getTime() === now.getTime();
-    const weather = buildBoatingWeather(data, items, includeCurrent);
+    const daylight = forecast;
+    const items = forecast.items;
+    const weather = forecast.weather;
     const details = getBoatingDetails(weather);
     const state = boatingStatusClass(details.score);
 
