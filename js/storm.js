@@ -44,6 +44,12 @@ while (timeline.children.length > maxItems) {
 function updateStormStatusFromCache() {
     clearStormTimeline();
   const cached = localStorage.getItem("cachedWeather");
+  const cachedTime = localStorage.getItem("cachedWeatherTime");
+  const updatedAt = cachedTime ? new Date(cachedTime) : null;
+  document.getElementById("storm-last-updated").textContent =
+    cached && updatedAt && Number.isFinite(updatedAt.getTime())
+      ? formatStormTime(updatedAt)
+      : "--";
 
 if (!cached) {
     document.getElementById("storm-status-icon").style.background = "#808080";
@@ -94,9 +100,6 @@ const statusLight = document.getElementById("storm-status-icon");
 statusLight.style.background = color;
 document.getElementById("storm-status-word").textContent = word;
 document.getElementById("storm-status-message").textContent = message;
-
-document.getElementById("storm-last-updated").textContent =
-    formatStormTime(new Date());
 
 const nextHour = hourly.time
   .map((time, index) => ({ time: new Date(time), index }))
@@ -816,22 +819,34 @@ addStormTimelineItem(
 // ----------------------------
 // Page Startup and Refresh
 // ----------------------------
-updateStormStatusFromCache();
-updateRadarAwareness();
-updateWarnings();
-
 const refreshButton = document.querySelector(".refresh-button");
+const STORM_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+let stormRefreshInProgress = false;
 
-if (refreshButton) {
-refreshButton.addEventListener("click", () => {
-    refreshButton.classList.add("spinning");
+async function refreshStormCenter(showSpinner = false) {
+  if (stormRefreshInProgress) return;
+
+  stormRefreshInProgress = true;
+  if (showSpinner) refreshButton?.classList.add("spinning");
+
+  try {
+    try {
+      await fetchWeatherData();
+    } catch (error) {
+      console.error("Unable to refresh the storm forecast:", error);
+    }
 
     updateStormStatusFromCache();
-updateRadarAwareness();
-updateWarnings();
-
-    setTimeout(() => {
-        refreshButton.classList.remove("spinning");
-    }, 800);
-});
+    await Promise.all([updateRadarAwareness(), updateWarnings()]);
+  } catch (error) {
+    console.error("Unable to refresh the Storm Center:", error);
+  } finally {
+    stormRefreshInProgress = false;
+    if (showSpinner) refreshButton?.classList.remove("spinning");
+  }
 }
+
+updateStormStatusFromCache();
+refreshStormCenter();
+refreshButton?.addEventListener("click", () => refreshStormCenter(true));
+setInterval(refreshStormCenter, STORM_REFRESH_INTERVAL_MS);
